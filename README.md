@@ -9,3 +9,4 @@ Fyrooz, Anith, and Steve's repo for DATS6101
 	- `git config user.email "you@example.com"` 
 - Push to branch `git push -u origin <branch-name>`. `git add <file>` to stage changes, or `git add .` to stage all modifed files. `git commit -m "describe changes you made`<br>
 - Use `git pull <name> <branch>` to get repo updates (must have cloned repo first><br>
+- Use `git status` in case you want to know what branch your on, if it is up to date, if you have anything stagged to commit
