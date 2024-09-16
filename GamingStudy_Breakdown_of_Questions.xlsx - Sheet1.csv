@@ -1,0 +1,56 @@
+CSV File Header,Measurement,Participant or Examiner?,Survey Question,Questionairre Section
+S. No.,Survey Number,Examiner,N/A,N/A
+Timestamp,Time of Submission,Examiner,N/A,N/A
+GAD1,"Generalized Anxiety Disorder, Subquestion 1",Participant,"Feeling nervous, anxious or on edge?",1
+GAD2,"Generalized Anxiety Disorder, Subquestion 2",Participant,Not being able to stop or control worrying?,1
+GAD3,"Generalized Anxiety Disorder, Subquestion 3",Participant,Worrying too much about different things?,1
+GAD4,"Generalized Anxiety Disorder, Subquestion 4",Participant,Trouble relaxing?,1
+GAD5,"Generalized Anxiety Disorder, Subquestion 5",Participant,Being so restless that it is hard to sit still?,1
+GAD6,"Generalized Anxiety Disorder, Subquestion 6",Participant,Becoming easily annoyed or irritable?,1
+GAD7,"Generalized Anxiety Disorder, Subquestion 7",Participant,Feeling afraid as if something awful might happen?,1
+GADE,"Generalized Anxiety Disorder, Effect in Life",Participant,"If you checked off any problems, how difficult have these made it for you to do your work, take care of things at home, or get along with other people?",1
+SWL1,"Satisfaction with Life, Subquestion 1",Participant,In most ways my life is close to my ideal.,2
+SWL2,"Satisfaction with Life, Subquestion 2",Participant,The conditions of my life are excellent.,2
+SWL3,"Satisfaction with Life, Subquestion 3",Participant,I am satisfied with my life.,2
+SWL4,"Satisfaction with Life, Subquestion 4",Participant,So far I have gotten the important things I want in life. ,2
+SWL5,"Satisfaction with Life, Subquestion 5",Participant,"If I could live my life over, I would change almost nothing.",2
+Game,Most Frequent Game Played,Participant,Which game do you play the most regularly at the moment?,3
+Platform,Method of Gaming,Participant,Which platform do you use to play?,3
+Hours,Hours spent gaming per week,Participant,How many hours of the game do you play each week on average?,3
+Playstyle,Singleplayer or Multiplayer Gaming,Participant,How do you play the most?,3
+earnings,Monetary Earnings,Participant,Is playing this game your hobby or do you make money from it?,3
+whyplay,Importance of playing games,Participant,What is most important to you when playing?,3
+League,"Professional Gaming League, if applicable",Participant,"If applicable, which league are you currently in?",3
+highestleague,N/A (safe to delete),Participant,N/A,3
+streams,"Time Spent watching Steams, Tournaments, etc.",Participant,"In addition to playing, how many hours a week do you spend on watching online player/tournament streams / replays / demos, giving or receiving coaching?",3
+SPIN1,"Social Phobia Inventory, Subquestion 1",Participant,I am afraid of people in authority.,5
+SPIN2,"Social Phobia Inventory, Subquestion 2",Participant,I am bothered by blushing in front of people.,5
+SPIN3,"Social Phobia Inventory, Subquestion 3",Participant,Parties and social events scare me.,5
+SPIN4,"Social Phobia Inventory, Subquestion 4",Participant,I avoid talking to people I don’t know.,5
+SPIN5,"Social Phobia Inventory, Subquestion 5",Participant,Being criticized scares me a lot.,5
+SPIN6,"Social Phobia Inventory, Subquestion 6",Participant,I avoid doing things or speaking to people for fear of embarrassment.,5
+SPIN7,"Social Phobia Inventory, Subquestion 7",Participant,Sweating in front of people causes me distress.,5
+SPIN8,"Social Phobia Inventory, Subquestion 8",Participant,I avoid going to parties.,5
+SPIN9,"Social Phobia Inventory, Subquestion 9",Participant,I avoid activities in which I am the center of attention.,5
+SPIN10,"Social Phobia Inventory, Subquestion 10",Participant,Talking to strangers scares me.,5
+SPIN11,"Social Phobia Inventory, Subquestion 11",Participant,I avoid having to give speeches.,5
+SPIN12,"Social Phobia Inventory, Subquestion 12",Participant,I would do anything to avoid being criticized.,5
+SPIN13,"Social Phobia Inventory, Subquestion 13",Participant,Heart palpitations bother me when I am around people.,5
+SPIN14,"Social Phobia Inventory, Subquestion 14",Participant,I am afraid of doing things when people might be watching.,5
+SPIN15,"Social Phobia Inventory, Subquestion 15",Participant,Being embarrassed or looking stupid are among my worst fears.,5
+SPIN16,"Social Phobia Inventory, Subquestion 16",Participant,I avoid speaking to anyone in authority.,5
+SPIN17,"Social Phobia Inventory, Subquestion 17",Participant,Trembling or shaking in front of others is distressing to me.,5
+Narcissism,Agree or Disagree being some level of a Narcissist,Participant,To what extent do you agree with this statement: 'I am a narcissist',6
+Gender,"Gender (Male, Female, or Other)",Participant,Your gender,6
+Age,Age (Years),Participant,Your age,6
+Work,Work Status,Participant,Your work status,6
+Degree,Highest Degree Awarded,Participant,Your highest degree,6
+Birthplace,Country of Birth,Participant,Your country of birth,6
+Residence,Country of Residence,Participant,Your country of residence,6
+Reference,Method how study was made known to participant,Participant,How did you know of this study?,6
+accept,Survey Taker accepts terms and submit survey,Participant,N/A,N/A
+GAD_T,Sum of GAD questions,Examiner,N/A,N/A
+SWL_T,Sum of SWL questions,Examiner,N/A,N/A
+SPIN_T,Sum of SPIN questions,Examiner,N/A,N/A
+Residence_ISO3,Three Letter Residence Code,Examiner,N/A,N/A
+Birthplace_ISO3,Three Letter Birthplace Code,Examiner,N/A,N/A
