@@ -1,0 +1,132 @@
+---
+title: "DATS 6101_12 Project 1"
+author: "Anith Muthalaly"
+date: "Last Updated on `r sys.Date()`"
+output: 
+  html_document:
+    code_folding: show
+    number_sections: false
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+---
+
+```{r init, include=F}
+# The package "ezids" (EZ Intro to Data Science) includes some helper functions we developed for the course. 
+# Some of the frequently used functions are loadPkg(), xkabledply(), xkablesummary(), uzscale(), etc.
+# You will need to install it (once) from GitHub.
+# library(devtools)
+# devtools::install_github("physicsland/ezids")
+# Then load the package in your R session.
+library(ezids)
+```
+
+```{r setup, include=FALSE}
+# Set knitr options
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1 - Load the necessary libraries
+```{r load-libraries}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(readxl)
+library(magrittr)
+library(caret) # for KNN imputation
+library(purrr)
+library(labelled)
+library(forcats)
+```
+
+# 2 - Load and print the gaming data into a data frame
+```{r load-data}
+# Load gaming data from the specified csv file
+gaming <- read.csv("G:/My Drive/Flash Drive Contents/E/Graduate School/The George Washington University/Data Science/DATS 6101_12 (Morris)/Project 1/GamingStudy_data_cleaned.csv", header=T)
+head(gaming)
+```
+
+# 3 - Columns
+```{r column-names}
+cat(design, "\n")
+cat("Column Names: \n", colnames(gaming), "\n")
+```
+
+# 4 - Shape
+```{r dataframe-dimensions}
+cat(design, "\n")
+cat("Data Frame Dimensions: \n", dim(gaming), "\n")
+```
+
+# 5 - Get information on the types of variables in each column
+```{r data-types}
+cat(design, "\n")
+str(gaming)
+```
+
+# 6 - Check the non-quantitative (character type) variables
+```{r categorical-columns}
+cat(design, "\n")
+categorical_columns <- gaming %>% select_if(is.character) %>% colnames()
+cat("Categorical Columns: \n", categorical_columns, "\n")
+```
+
+# 7 - Check the quantitative (numeric type) variables
+```{r numerical-columns}
+cat(design, "\n")
+numerical_columns <- gaming %>% select_if(is.numeric) %>% colnames()
+cat("Numerical Columns: \n", numerical_columns, "\n")
+```
+
+# 8 - Get a quick statistical summary of numerical columns
+```{r numerical-summary}
+cat(design, "\n")
+summary(gaming %>% select_if(is.numeric))
+```
+
+# 9 - Define custom mappings for GADE and Degree columns
+```{r define-mappings}
+gade_mapping <- c('' = 0, 'Not difficult at all' = 1, 'Somewhat difficult' = 2, 'Very difficult' = 3, 'Extremely difficult' = 4)
+work_mapping <- c('' = 0, 'Unemployed/between jobs' = 1, 'Employed' = 2, 'Student at school' = 3, 'Student at college/university' = 4)
+degree_mapping <- c('' = 0, 'High school diploma (or equivalent)' = 1, 'Bachelor (or equivalent)' = 2, 'Master (or equivalent)' = 3, 'Ph.D., Psy. D., MD (or equivalent)' = 4)
+```
+
+# 10 - Apply the mapping using the mutate function
+```{r apply-mapping}
+gaming <- gaming %>%
+  mutate(GADE_encoded = fct_recode(as.factor(gaming$GADE), !!!gade_mapping),
+         Work_encoded = fct_recode(as.factor(gaming$Work), !!!work_mapping),
+         Degree_encoded = fct_recode(as.factor(gaming$Degree), !!!degree_mapping))
+
+head(gaming %>% select(GADE, GADE_encoded, Work, Work_encoded, Degree, Degree_encoded))
+```
+
+# 11 - Get the list of original columns
+```{r original-columns}
+original_columns <- colnames(gaming)
+print(original_columns)
+```
+
+# 12 - Define the mappings of original and encoded columns
+```{r encoded-columns}
+encoded_columns <- c(GADE = "GADE_encoded", Work = "Work_encoded", Degree = "Degree_encoded")
+```
+
+# 13 - Reorder the DataFrame with encoded columns right after their originals
+```{r reorder-dataframe}
+new_column_order <- unlist(map(original_columns, function(col) {
+  if(col %in% names(encoded_columns)) {
+    c(col, encoded_columns[[col]])
+  } else {
+    col
+  }
+}))
+
+gaming <- gaming[, new_column_order]
+head(gaming)
+```
+
+# 14 - Save the changes into a CSV file
+```{r save-csv, eval=FALSE}
+write.csv(gaming, "G:/My Drive/Flash Drive Contents/E/Graduate School/The George Washington University/Data Science/DATS 6101_12 (Morris)/Project 1/encoded_gaming.csv")
+```
