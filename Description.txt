@@ -1,0 +1,24 @@
+Package: ezids
+Title: Intro to DS classes EZ-Helper functions at The George Washington University
+Version: 0.1.2023.09.12
+Authors@R: 
+    person(given = "Edwin",
+           family = "Lo",
+           role = c("aut", "cre"),
+           email = "edwinlo@gwu.edu",
+           comment = c("TBD"))
+Description: EZ-Helper functions for the intro data science classes at The George Washington University in Washington DC 22025
+License: `use_mit_license()`
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports:
+    xtable,
+	  kableExtra,
+	  stringr,
+	  faraway, 
+	  httr,
+	  jsonlite
+Suggests:
+    ISLR
