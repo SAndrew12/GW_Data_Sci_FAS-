@@ -17,6 +17,7 @@ library(ezids)
 library(readr)
 library(ggplot2)
 library(dplyr)
+library(stringr)
 ```
 
 
@@ -72,6 +73,285 @@ glimpse(df)
 # colnames(mlb)[4:6]=c("height","weight","age")
 # # The line above produces no output. To see the changes, use str() or head()
 # xkabledplyhead(mlb, title = "Header rows for mlb dataset")
+```
+
+## Make raw scores ordinal
+``` {r, ord}
+# Function to convert GAD_T to ordinal variable
+convert_GAD <- function(score) {
+  if (is.na(score)) return(NA)  # Handle NA values
+  if (score >= 0 & score <= 4) {
+    return("minimal anxiety")
+  } else if (score >= 5 & score <= 9) {
+    return("mild anxiety")
+  } else if (score >= 10 & score <= 14) {
+    return("moderate anxiety")
+  } else if (score >= 15 & score <= 21) {
+    return("severe anxiety")
+  } else {
+    return(NA)  # Handles scores outside defined range
+  }
+}
+
+# Function to convert SWL_T to ordinal variable
+convert_SWL <- function(score) {
+  if (is.na(score)) return(NA)  # Handle NA values
+  if (score >= 31 & score <= 35) {
+    return("extremely satisfied")
+  } else if (score >= 26 & score <= 30) {
+    return("satisfied")
+  } else if (score >= 21 & score <= 25) {
+    return("slightly satisfied")
+  } else if (score == 20) {
+    return("neutral")
+  } else if (score >= 15 & score <= 19) {
+    return("slightly dissatisfied")
+  } else if (score >= 10 & score <= 14) {
+    return("dissatisfied")
+  } else if (score >= 5 & score <= 9) {
+    return("extremely dissatisfied")
+  } else {
+    return(NA)  # Handles scores outside defined range
+  }
+}
+
+# Function to convert SPIN_T to ordinal variable
+convert_SPIN <- function(score) {
+  if (is.na(score)) return(NA)  # Handle NA values
+  if (score >= 0 & score <= 20) {
+    return("none")
+  } else if (score >= 21 & score <= 30) {
+    return("mild")
+  } else if (score >= 31 & score <= 40) {
+    return("moderate")
+  } else if (score >= 41 & score <= 50) {
+    return("severe")
+  } else if (score >= 51 & score <= 68) {
+    return("very severe")
+  } else {
+    return(NA)  # Handles scores outside defined range
+  }
+}
+
+# Create new columns in the data frame
+df$GAD_ord <- sapply(df$GAD_T, convert_GAD)
+df$SWL_ord <- sapply(df$SWL_T, convert_SWL)
+df$SPIN_ord <- sapply(df$SPIN_T, convert_SPIN)
+
+# Print the updated data frame
+print(df$GAD_ord)
+
+```
+
+## Plot Vars
+Game Played (cat)
+
+``` {r, gameplot}
+game_counts <- as.data.frame(table(df$Game))
+colnames(game_counts) <- c("Game", "SurveyCount")
+game_counts <- game_counts[order(-game_counts$SurveyCount), ]
+
+# Create the plot
+fig <- ggplot(game_counts, aes(x = reorder(Game, -SurveyCount), y = SurveyCount)) +
+  geom_bar(stat = 'identity', fill = '#232A75') +
+  labs(title = 'Game Distribution', 
+       subtitle = '', 
+       x = '', 
+       y = 'Total Surveyors') +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_minimal()  +
+ theme(plot.title = element_text(hjust = 0.5))
+# Print the figure
+print(fig)
+```
+
+Gender (cat)
+
+``` {r, genderplot}
+gender_counts <- as.data.frame(table(df$Gender))
+colnames(gender_counts) <- c("Gender", "SurveyCount")
+gender_counts <- gender_counts[order(-gender_counts$SurveyCount), ]
+
+# Create the plot
+fig <- ggplot(gender_counts, aes(x = reorder(Gender, -SurveyCount), y = SurveyCount)) +
+  geom_bar(stat = 'identity', fill = '#232A75') +
+  labs(title = 'Gender Distribution', 
+       subtitle = '', 
+       x = '', 
+       y = 'Total Respondents') +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_minimal()  +
+ theme(plot.title = element_text(hjust = 0.5))
+
+# Print the figure
+print(fig)
+```
+
+whyplay
+
+``` {r, cleaningwhyplay}
+clean_responses <- function(response) {
+  response <- trimws(tolower(response))  # Normalize to lowercase and trim whitespace
+  
+  # Check for exact matches first
+  if (response %in% c("winning", "improving", "relaxing", "having fun")) {
+    return(response)
+  }
+  
+  # Check for various conditions to set the response
+  if (str_detect(response, "^a[\\s,\\.]", ) || 
+      str_detect(response, "^1[\\s,\\.]", ) || 
+      str_detect(response, "^all") || 
+      str_detect(response, "^mix") || 
+      str_detect(response, "combination") || 
+      str_detect(response, "everything")) {
+    return("all of the above")
+  }
+  
+  if (str_detect(response, "distraction|escaping|escape|forget|hide|hiding|depression|boredom|bored|time|forgetting|distracting|doing something|getting away from real life|trying to get my mind off")) {
+    return("escape")
+  }
+
+  if (str_detect(response, "improve|improving|learn|learning")) {
+    return("improving")
+  }
+  
+  if (str_detect(response, "well|perform|performing")) {
+    return("winning")
+  }
+  
+  if (str_detect(response, "social|socializing|friends|team|cooperating|i don't know anymore|occupied|making my brain go numb|the people i play with, the game is less important")) {
+    return("social")
+  }
+  
+  if (str_detect(response, "win|winning|beating|victory|competeing|competing|competition|conpeting")) {
+    return("winning")
+  }
+  
+  if (str_detect(response, "winning") && str_detect(response, "improving")) {
+    return("mix")
+  }
+  
+  if (str_detect(response, "relaxing") && str_detect(response, "fun")) {
+    return("mix")
+  }
+  
+  if (str_detect(response, "combination|all")) {
+    return("mix")
+  }
+  
+  if (str_detect(response, "fun")) {
+    return("having fun")
+  }
+  
+  # Default to original response if no condition is met
+  return("bad response")
+}
+
+# Apply the cleaning function to the 'whyplay' column
+df$cleaned_whyplay <- sapply(df$whyplay, clean_responses)
+
+# Count the occurrences of each cleaned response
+whyplay_counts <- as.data.frame(table(df$cleaned_whyplay))
+```
+
+```{r, why }
+
+colnames(whyplay_counts) <- c("WhyPlay", "SurveyCount")
+
+
+whyplay_counts <- whyplay_counts[order(-whyplay_counts$SurveyCount), ]
+
+
+whyplay_counts$WhyPlay <- factor(whyplay_counts$WhyPlay, levels = whyplay_counts$WhyPlay)
+
+
+fig <- ggplot(whyplay_counts, aes(x = WhyPlay, y = SurveyCount)) +
+  geom_bar(stat = 'identity', fill = '#232A75') +
+  labs(title = 'Reasons for Playing', 
+       subtitle = '', 
+       caption = 'Data Source: Survey Data', 
+       x = 'Reasons for Playing', 
+       y = 'Total Respondents') +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+print(fig)
+```
+
+Age (num)
+
+``` {r, age}
+age_counts <- as.data.frame(table(df$Age))
+colnames(age_counts) <- c("Age", "SurveyCount")
+age_counts <- age_counts[order(-age_counts$SurveyCount), ]
+
+# Create the plot
+fig <- ggplot(age_counts, aes(x = reorder(Age, -SurveyCount), y = SurveyCount)) +
+  geom_bar(stat = 'identity', fill = '#232A75') +
+  labs(title = 'Age Distribution', 
+       subtitle = '', 
+       x = 'Age', 
+       y = 'Total Respondents') +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_minimal()  +
+ theme(plot.title = element_text(hjust = 0.5))
+
+# Print the figure
+print(fig)
+
+```
+
+
+Hours (num)
+
+``` {r, hours}
+
+hour_counts <- as.data.frame(table(df$Hours))
+colnames(hour_counts) <- c("Hours", "SurveyCount")
+hour_counts <- hour_counts[order(-hour_counts$SurveyCount), ]
+
+# Create the plot
+fig <- ggplot(hour_counts, aes(x = reorder(Hours, -SurveyCount), y = SurveyCount)) +
+  geom_bar(stat = 'identity', fill = '#232A75') +
+  labs(title = 'Hours Distribution', 
+       subtitle = '', 
+       x = 'Hours', 
+       y = 'Total Respondents') +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_minimal()   +
+ theme(plot.title = element_text(hjust = 0.5))
+# Print the figure
+print(fig)
+```
+
+
+streams (num)
+
+``` {r, streams}
+stream_counts <- as.data.frame(table(df$streams))
+colnames(stream_counts) <- c("Streams", "SurveyCount")
+
+# Sort the data
+stream_counts <- stream_counts[order(-stream_counts$SurveyCount), ]
+
+# Convert Streams to a factor with levels based on sorted order
+stream_counts$Streams <- factor(stream_counts$Streams, levels = stream_counts$Streams)
+
+# Create the plot
+fig <- ggplot(stream_counts, aes(x = Streams, y = SurveyCount)) +
+  geom_bar(stat = 'identity', fill = '#232A75') +
+  labs(title = 'Streams Distribution', 
+       subtitle = '', 
+       caption = 'Data Source: Survey Data', 
+       x = 'Streams', 
+       y = 'Total Respondents') +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Print the figure
+print(fig)
 ```
 
 ## Outliers adn qq
@@ -302,7 +582,7 @@ mean_spin
 
 ## Pearsons Corrleation
 ### SWL and Hours...for now
-``` {r, corr}
+``` {r, corr_h_swl}
 correlation_result <- cor(df$Hours, df$SWL_T, method = "pearson", use = "complete.obs")
 print(correlation_result)
 
@@ -312,4 +592,140 @@ cor_test
 
 This very weak negative correlation means that an increase in hours played slightly results in a lower SWL score (less life satisfaction).
 
+### hours and streams
+``` {r, corr_h_s}
+correlation_result <- cor(df$Hours, df$streams, method = "pearson", use = "complete.obs")
+print(correlation_result)
 
+cor_test <- cor.test(df$Hours, df$streams)
+cor_test
+```
+
+### chi-squared for GAD and WhyPlay
+
+
+null hypothesis is that there is no relation. Alternate is that there is. 
+```{r contingency, include=TRUE}
+contingency_table <- table(df$GAD_ord, df$cleaned_whyplay)
+
+# Print the contingency table
+print(contingency_table)
+
+chi_squared_test <- chisq.test(contingency_table)
+
+# Print the results of the Chi-squared test
+chi_squared_test
+```
+
+the very low p-value of 0.0000000000000002 indicates very strong evidence against the null hypothesis. We reject the null
+
+
+Post-hoc analysis 
+
+``` {r, posthoc}
+expected_counts <- chisq.test(contingency_table)$expected
+
+# Calculate residuals
+residuals <- contingency_table - expected_counts
+
+# Calculate adjusted residuals
+adjusted_residuals <- residuals / sqrt(expected_counts)
+
+# Print adjusted residuals
+print(adjusted_residuals)
+
+
+contingency_df <- as.data.frame(contingency_table)
+
+# Plot
+ggplot(contingency_df, aes(x = Var1, y = Freq, fill = Var2)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "GAD Ordinal Categories", y = "Frequency", fill = "Why Play") +
+  theme_minimal()
+```
+
+### chi-squared for SPIN and WhyPlay
+
+
+null hypothesis is that there is no relation. Alternate is that there is. 
+```{r contingency2, include=TRUE}
+contingency_table <- table(df$SPIN_ord, df$cleaned_whyplay)
+
+# Print the contingency table
+print(contingency_table)
+
+chi_squared_test <- chisq.test(contingency_table)
+
+# Print the results of the Chi-squared test
+chi_squared_test
+```
+
+the very low p-value of 0.0000000000000002 indicates very strong evidence against the null hypothesis. We reject the null
+
+
+Post-hoc analysis 
+
+``` {r, posthoc2}
+expected_counts <- chisq.test(contingency_table)$expected
+
+# Calculate residuals
+residuals <- contingency_table - expected_counts
+
+# Calculate adjusted residuals
+adjusted_residuals <- residuals / sqrt(expected_counts)
+
+# Print adjusted residuals
+print(adjusted_residuals)
+
+
+contingency_df <- as.data.frame(contingency_table)
+
+# Plot
+ggplot(contingency_df, aes(x = Var1, y = Freq, fill = Var2)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "SPIN Ordinal Categories", y = "Frequency", fill = "Why Play") +
+  theme_minimal()
+```
+
+### chi-squared for SWL and WhyPlay
+
+
+null hypothesis is that there is no relation. Alternate is that there is. 
+```{r contingency3, include=TRUE}
+contingency_table <- table(df$SWL_ord, df$cleaned_whyplay)
+
+# Print the contingency table
+print(contingency_table)
+
+chi_squared_test <- chisq.test(contingency_table)
+
+# Print the results of the Chi-squared test
+chi_squared_test
+```
+
+the very low p-value of 0.0000000000000002 indicates very strong evidence against the null hypothesis. We reject the null
+
+
+Post-hoc analysis 
+
+``` {r, posthoc3}
+expected_counts <- chisq.test(contingency_table)$expected
+
+# Calculate residuals
+residuals <- contingency_table - expected_counts
+
+# Calculate adjusted residuals
+adjusted_residuals <- residuals / sqrt(expected_counts)
+
+# Print adjusted residuals
+print(adjusted_residuals)
+
+
+contingency_df <- as.data.frame(contingency_table)
+
+# Plot
+ggplot(contingency_df, aes(x = Var1, y = Freq, fill = Var2)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "SWL Ordinal Categories", y = "Frequency", fill = "Why Play") +
+  theme_minimal()
+```
