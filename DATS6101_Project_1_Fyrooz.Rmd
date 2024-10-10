@@ -1,0 +1,188 @@
+---
+title: "DATS6101_Project_1"
+author: "Stephen, Anith, Fyrooz"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    code_folding: hide
+    number_sections: false
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+```{r setup, include=FALSE}
+library(ezids)
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(stringr)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Topic and Dataset
+
+Video games offer an escape from reality for many, but we don’t know what people are going through psychologically when they play them. Our team has decided to work on an online gaming anxiety dataset to determine if we can find gaming habits related to mental health outcomes. This dataset, found on Kaggle, was scraped from the Center for Open Science's site which was in turn collected as a part of a survey by the original authors: Marian Sauter and Dejan Draschkow. It has 13,464 observations (respondents) from 109 countries.
+
+*Dataset: https://www.kaggle.com/datasets/divyansh22/online-gaming-anxiety-data/data*
+
+The variables are:  
+
+Variable |  Definition  
+  :-:    |  :-- 
+GAD: Generalized Anxiety Disorder -- measures severity of anxiety 
+GAD1 to GAD7: scale of severity of the Generalized Anxiety Disorder 7-item scale (GAD-7)
+GAD_T: Total score on the GAD-7 scale
+
+SWL: Satisfaction With Life -- measures and individual's perceived satisfaction with life
+SWL1 to SWL5: scale of the Satisfaction With Life Scale (SWLS)
+SWL_T: Total score on the Satisfaction With Life Scale
+
+GADE: Generalized Anxiety Disorder Effect in Life -- If you checked off any problems, how difficult have these made it for you to do your work, take care of things at home, or get along with other people?
+
+Game: The name of the game most frequently played by the respondent
+Platform: The gaming platform used by the respondent (e.g., PC, console)
+Hours: Hours spent gaming per week
+earnings: Monetary Earnings
+whyplay: Reasons for playing the game
+League: Professional Gaming League, if applicable
+highestleague: Highest league or level achieved in the game
+streams: Time Spent watching Steams, Tournaments, etc besides playing.
+
+SPIN: Social Phobia Inventory -- Used to identify or monitor social anxiety disorder (social phobia)
+SPIN1 to SPIN17: scale of the Social Phobia Inventory
+SPIN_T: Total score on the Social Phobia Inventory
+
+Narcissism: Score on a Narcissism assessment -- Agree or Disagree being some level of a Narcissist
+
+Gender: Gender of the respondent
+Age: Age of the respondent
+Work: Employment status of the respondent
+Degree: Highest degree attained by the respondent
+Birthplace: Birthplace of the respondent
+Residence: Current residence of the respondent
+Reference: Method how study was made known to participant
+Playstyle: The respondent’s playstyle in the game (Single/ Multiplayer)
+accept: Acceptance or consent to participate in the survey or study
+
+Residence_ISO3: ISO 3166-1 alpha-3 code for the respondent’s residence country
+Birthplace_ISO3: ISO 3166-1 alpha-3 code for the respondent’s birthplace country
+
+```{r summry_gaming data}
+library(knitr)
+gaming_data = read.csv("GamingStudy_data.csv", header=T)
+head(gaming_data)
+```
+# Check for missing values
+```{r}
+sum(is.na(gaming_data))
+```
+# Check missing values per column
+```{r}
+missing_values <- colSums(is.na(gaming_data))
+print(missing_values)
+```
+
+
+
+
+# Replace missing values in the Hours column with NA explicitly
+```{r}
+hrs_data_cleaned <- gaming_data %>%
+  mutate(Hours = ifelse(is.na(Hours), NA, Hours))
+missing_values <- colSums(is.na(hrs_data_cleaned))
+print(missing_values)
+```
+
+# Filter necessary columns
+```{r}
+hrs_GAD_filtered <- hrs_data_cleaned %>%
+  select(Hours, GAD1:GAD7, GAD_T)
+```
+
+
+# Summary of the filtered dataset
+```{r}
+summary(hrs_GAD_filtered)
+```
+
+
+## Visualizations
+
+# Finding outliers in Hours
+
+```{r}
+ggplot(hrs_GAD_filtered, aes(x=Hours)) + 
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Outliers in Hours spent gaming per week", x="Hours spent(per week)", y = "")
+
+```
+
+# Removing outliers in Hours and creating new dataset
+
+```{r}
+# Define the outlierKD2 function
+outlierKD2 <- function(dt, var, rm = TRUE, boxplt = TRUE, qqplt = TRUE) { 
+  var_name <- eval(substitute(var),eval(dt))
+  na1 <- sum(is.na(var_name))
+  m1 <- mean(var_name, na.rm = TRUE)
+  
+  # Generate plots (boxplot and histogram)
+  if (boxplt) {
+    par(mfrow = c(2, 2), oma = c(0, 0, 3, 0))
+    boxplot(var_name, main = "With outliers")
+    hist(var_name, main = "With outliers", xlab = NA, ylab = NA)
+  }
+  
+  outlier <- boxplot.stats(var_name)$out
+  mo <- mean(outlier)
+  
+  var_name <- ifelse(var_name %in% outlier, NA, var_name)
+  
+  if (boxplt) {
+    boxplot(var_name, main = "Without outliers")
+    hist(var_name, main = "Without outliers", xlab = NA, ylab = NA)
+  }
+  
+  # Generate QQ plot if requested
+  if (qqplt) {
+    qqnorm(var_name)
+    qqline(var_name)
+  }
+  
+  na2 <- sum(is.na(var_name))
+  
+  cat("Outliers identified:", na2 - na1, "\n")
+  cat("Proportion (%) of outliers:", round((na2 - na1) / sum(!is.na(var_name)) * 100, 1), "\n")
+  cat("Mean of the outliers:", round(mo, 2), "\n")
+  m2 <- mean(var_name, na.rm = TRUE)
+  cat("Mean without removing outliers:", round(m1, 2), "\n")
+  cat("Mean if we remove outliers:", round(m2, 2), "\n")
+  
+  # Option to remove outliers (replace with NA)
+  if (rm) {
+    dt[[as.character(substitute(var))]] <- invisible(var_name)
+    assign(as.character(as.list(match.call())$dt), dt, envir = .GlobalEnv)
+    cat("Outliers successfully removed\n")
+    return(invisible(dt))
+  } else {
+    cat("Nothing changed\n")
+    return(invisible(var_name))
+  }
+}
+
+# Assume hrs_GAD_filtered is your dataset
+# Use outlierKD2 to remove outliers from 'Hours'
+hrs_GAD_filtered_clean <- outlierKD2(hrs_GAD_filtered, Hours, rm = TRUE, boxplt = TRUE, qqplt = TRUE)
+
+# Check the structure of the cleaned dataset
+str(hrs_GAD_filtered_clean)
+
+# Summary to verify the changes
+summary(hrs_GAD_filtered_clean)
+
+```
