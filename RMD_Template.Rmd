@@ -600,6 +600,7 @@ print(correlation_result)
 cor_test <- cor.test(df$Hours, df$streams)
 cor_test
 ```
+## chi-squared 
 
 ### chi-squared for GAD and WhyPlay
 
