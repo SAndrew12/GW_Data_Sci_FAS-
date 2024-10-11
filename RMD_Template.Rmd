@@ -18,6 +18,9 @@ library(readr)
 library(ggplot2)
 library(dplyr)
 library(stringr)
+library(rstatix)
+library(knitr)
+library(kableExtra)
 ```
 
 
@@ -133,10 +136,26 @@ convert_SPIN <- function(score) {
   }
 }
 
+
 # Create new columns in the data frame
 df$GAD_ord <- sapply(df$GAD_T, convert_GAD)
 df$SWL_ord <- sapply(df$SWL_T, convert_SWL)
 df$SPIN_ord <- sapply(df$SPIN_T, convert_SPIN)
+
+#make values ordinal (min to max)
+df$GAD_ord <- factor(df$GAD_ord, 
+                     levels = c("minimal anxiety", "mild anxiety", "moderate anxiety", "severe anxiety"), 
+                     ordered = TRUE)
+
+df$SWL_ord <- factor(df$SWL_ord, 
+                     levels = c("extremely satisfied", "satisfied", "slightly satisfied", "neutral", 
+                                "slightly dissatisfied", "dissatisfied", "extremely dissatisfied"), 
+                     ordered = TRUE)
+
+df$SPIN_ord <- factor(df$SPIN_ord, 
+                      levels = c("none", "mild", "moderate", "severe", "very severe"), 
+                      ordered = TRUE)
+
 
 # Print the updated data frame
 print(df$GAD_ord)
@@ -644,6 +663,9 @@ ggplot(contingency_df, aes(x = Var1, y = Freq, fill = Var2)) +
   labs(x = "GAD Ordinal Categories", y = "Frequency", fill = "Why Play") +
   theme_minimal()
 ```
+
+
+
 
 ### chi-squared for SPIN and WhyPlay
 
