@@ -21,6 +21,7 @@ library(stringr)
 library(rstatix)
 library(knitr)
 library(kableExtra)
+library(reshape2)
 ```
 
 
@@ -654,6 +655,14 @@ adjusted_residuals <- residuals / sqrt(expected_counts)
 # Print adjusted residuals
 print(adjusted_residuals)
 
+residuals_df <- melt(adjusted_residuals)
+
+# Create a heatmap
+ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "GAD and WhyPlay Adjusted Residuals Heatmap", x = "Variable 1", y = "Variable 2") +
+  theme_minimal()
 
 contingency_df <- as.data.frame(contingency_table)
 
@@ -700,6 +709,14 @@ adjusted_residuals <- residuals / sqrt(expected_counts)
 # Print adjusted residuals
 print(adjusted_residuals)
 
+residuals_df <- melt(adjusted_residuals)
+
+# Create a heatmap
+ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "SPIN and WhyPlay Adjusted Residuals Heatmap", x = "Variable 1", y = "Variable 2") +
+  theme_minimal()
 
 contingency_df <- as.data.frame(contingency_table)
 
@@ -743,6 +760,15 @@ adjusted_residuals <- residuals / sqrt(expected_counts)
 # Print adjusted residuals
 print(adjusted_residuals)
 
+
+residuals_df <- melt(adjusted_residuals)
+
+# Create a heatmap
+ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "SWL and WhyPlay Adjusted Residuals Heatmap", x = "Variable 1", y = "Variable 2") +
+  theme_minimal()
 
 contingency_df <- as.data.frame(contingency_table)
 
