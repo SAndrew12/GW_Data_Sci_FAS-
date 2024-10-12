@@ -25,51 +25,51 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Topic and Dataset
 
-Video games offer an escape from reality for many, but we don’t know what people are going through psychologically when they play them. Our team has decided to work on an online gaming anxiety dataset to determine if we can find gaming habits related to mental health outcomes. This dataset, found on Kaggle, was scraped from the Center for Open Science's site which was in turn collected as a part of a survey by the original authors: Marian Sauter and Dejan Draschkow. It has 13,464 observations (respondents) from 109 countries.
+Video games offer an escape from reality for many, but we don’t know what people are going through psychologically when they play them. Our team has decided to work on an online gaming anxiety dataset to determine if we can find gaming habits related to mental health outcomes. This dataset, found on Kaggle, was scraped from the Center for Open Science's site which was in turn collected as a part of a survey by the original authors: Marian Sauter and Dejan Draschkow. It has 13,464 observations (respondents) from 109 countries. <br>
 
-*Dataset: https://www.kaggle.com/datasets/divyansh22/online-gaming-anxiety-data/data*
+*Dataset: https://www.kaggle.com/datasets/divyansh22/online-gaming-anxiety-data/data* <br>
 
 The variables are:  
 
 Variable |  Definition  
   :-:    |  :-- 
-GAD: Generalized Anxiety Disorder -- measures severity of anxiety 
-GAD1 to GAD7: scale of severity of the Generalized Anxiety Disorder 7-item scale (GAD-7)
-GAD_T: Total score on the GAD-7 scale
+GAD: Generalized Anxiety Disorder -- measures severity of anxiety <br>
+GAD1 to GAD7: scale of severity of the Generalized Anxiety Disorder 7-item scale (GAD-7) <br>
+GAD_T: Total score on the GAD-7 scale <br>
 
-SWL: Satisfaction With Life -- measures and individual's perceived satisfaction with life
-SWL1 to SWL5: scale of the Satisfaction With Life Scale (SWLS)
-SWL_T: Total score on the Satisfaction With Life Scale
+SWL: Satisfaction With Life -- measures and individual's perceived satisfaction with life <br>
+SWL1 to SWL5: scale of the Satisfaction With Life Scale (SWLS) <br>
+SWL_T: Total score on the Satisfaction With Life Scale <br>
 
-GADE: Generalized Anxiety Disorder Effect in Life -- If you checked off any problems, how difficult have these made it for you to do your work, take care of things at home, or get along with other people?
+GADE: Generalized Anxiety Disorder Effect in Life -- If you checked off any problems, how difficult have these made it for you to do your work, take care of things at home, or get along with other people? <br>
 
-Game: The name of the game most frequently played by the respondent
-Platform: The gaming platform used by the respondent (e.g., PC, console)
-Hours: Hours spent gaming per week
-earnings: Monetary Earnings
-whyplay: Reasons for playing the game
-League: Professional Gaming League, if applicable
-highestleague: Highest league or level achieved in the game
-streams: Time Spent watching Steams, Tournaments, etc besides playing.
+Game: The name of the game most frequently played by the respondent <br>
+Platform: The gaming platform used by the respondent (e.g., PC, console) <br>
+Hours: Hours spent gaming per week <br>
+earnings: Monetary Earnings <br>
+whyplay: Reasons for playing the game <br>
+League: Professional Gaming League, if applicable <br>
+highestleague: Highest league or level achieved in the game <br>
+streams: Time Spent watching Steams, Tournaments, etc besides playing. <br>
 
-SPIN: Social Phobia Inventory -- Used to identify or monitor social anxiety disorder (social phobia)
-SPIN1 to SPIN17: scale of the Social Phobia Inventory
-SPIN_T: Total score on the Social Phobia Inventory
+SPIN: Social Phobia Inventory -- Used to identify or monitor social anxiety disorder (social phobia) <br>
+SPIN1 to SPIN17: scale of the Social Phobia Inventory <br>
+SPIN_T: Total score on the Social Phobia Inventory <br>
 
-Narcissism: Score on a Narcissism assessment -- Agree or Disagree being some level of a Narcissist
+Narcissism: Score on a Narcissism assessment -- Agree or Disagree being some level of a Narcissist <br>
 
-Gender: Gender of the respondent
-Age: Age of the respondent
-Work: Employment status of the respondent
-Degree: Highest degree attained by the respondent
-Birthplace: Birthplace of the respondent
-Residence: Current residence of the respondent
-Reference: Method how study was made known to participant
-Playstyle: The respondent’s playstyle in the game (Single/ Multiplayer)
-accept: Acceptance or consent to participate in the survey or study
+Gender: Gender of the respondent <br>
+Age: Age of the respondent <br>
+Work: Employment status of the respondent <br>
+Degree: Highest degree attained by the respondent <br>
+Birthplace: Birthplace of the respondent <br>
+Residence: Current residence of the respondent <br>
+Reference: Method how study was made known to participant <br>
+Playstyle: The respondent’s playstyle in the game (Single/ Multiplayer) <br>
+accept: Acceptance or consent to participate in the survey or study <br>
 
-Residence_ISO3: ISO 3166-1 alpha-3 code for the respondent’s residence country
-Birthplace_ISO3: ISO 3166-1 alpha-3 code for the respondent’s birthplace country
+Residence_ISO3: ISO 3166-1 alpha-3 code for the respondent’s residence country <br>
+Birthplace_ISO3: ISO 3166-1 alpha-3 code for the respondent’s birthplace country <br>
 
 ```{r summry_gaming data}
 library(knitr)
@@ -118,7 +118,7 @@ summary(hrs_GAD_filtered)
 ggplot(hrs_GAD_filtered, aes(x=Hours)) + 
   geom_boxplot() + 
   geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
-  labs(title="Outliers in Hours spent gaming per week", x="Hours spent(per week)", y = "")
+  labs(title="Outliers in Hours spent gaming per week", x="Hours spent (per week)", y = "")
 
 ```
 
@@ -184,5 +184,242 @@ str(hrs_GAD_filtered_clean)
 
 # Summary to verify the changes
 summary(hrs_GAD_filtered_clean)
+
+```
+
+
+# Create a histogram and boxplot for Hours
+
+```{r}
+hist(hrs_GAD_filtered_clean$Hours, main = "Histogram of Hours Spent Gaming", xlab = "Hours spent (per week)", col = "lightblue")
+boxplot(hrs_GAD_filtered_clean$Hours, main = "Boxplot of Hours Spent Gaming", xlab = "Hours spent (per week)", col = "lightblue")
+```
+
+# Cleaning the Playstyle Data and creating new dataframe with Whyplay
+```{r}
+
+# Define the patterns for each category
+singleplayer_patterns <- c(
+  "Singleplayer", "Singleplayer - online", "Single player - speedrunning",
+  "Singleplayer, but streaming", "1v1 matchmaking", 
+  "By myself/with 1 friend whilst communicating our soloq experiences with each other over skype",
+  "solo q", "Soloqueue", "Solo Que", "One person", "Yolo queue"
+)
+
+both_type_patterns <- c(
+  "Mutliplayer - A mix of friends/strangers.", 
+  "mix of real life friends and online acquaintances", "A mixture of all of them", 
+  "Mix of online teammates and real life friends", 
+  "Mix between Singleplayer and Multilayer with real life friends",
+  "Multiplayer - online - mix of real life friends and strangers",
+  "Sometimes alone \\(Ranked\\), sometimes with friends. Everytime there are strangers in my game ofc",
+  "A combination of all of the above", "It's really a bit of all",
+  "Used to be the last option only, but in the last two weeks only singleplayer",
+  "all", "Alone and with online acquaintances", "both", 
+  "some times solo, other with friends", 
+  "pretty much balanced of all you listed", "Everything from above in the same amount",
+  "Single/Multi same amount", "Its a mixture of both single player and online with strangers",
+  "all of above", "Singleplayer and multiplayer online with strangers",
+  "Skyrim Single player, League with friends", "I'm versatile", 
+  "Solo queue/Duo queue", "friends online, also solo player",
+  "Everything almost equally", 
+  "Singleplayer - online - talking with real life friends", 
+  "singleplayer and multiplayer with real life friends or strangers",
+  "Duo Queue with one good friend, else solo", "Depends",
+  "Its pretty 33%: SP\\(KSP\\), MP friends\\(CS\\), MP strangers\\(LoL\\))",
+  "all of em \\?", "mix of all", "Both Single and Online with friends",
+  "Everything", "sometimes soloq, sometimes with friends",
+  "Both multi- and singleplayer with both friends and strangers",
+  "With all the above", "usually combination of all", "an equal mix", 
+  "last 3 options", "all of the above", "single/multi offline", 
+  "singleplayer, multiplayer with acquaintances, and multiplayer with real life friends"
+)
+
+# Define a function to categorize the play styles
+categorize_playstyle <- function(playstyle) {
+  if (any(sapply(singleplayer_patterns, function(pattern) grepl(pattern, playstyle, ignore.case = TRUE)))) {
+    return("SinglePlayer")
+  } else if (any(sapply(both_type_patterns, function(pattern) grepl(pattern, playstyle, ignore.case = TRUE)))) {
+    return("Both Type")
+  } else {
+    return("Multiplayer")
+  }
+}
+
+# Apply the function to the Playstyle column and create a new column
+gaming_data <- gaming_data %>%
+  mutate(Playstyle_Standardized = sapply(Playstyle, categorize_playstyle))
+
+# Extract the necessary columns to create the new dataframe
+df_playstyle_whyplay <- gaming_data %>%
+  select(Playstyle_Standardized, whyplay)
+
+# View the new dataframe
+head(df_playstyle_whyplay)
+
+
+```
+
+
+#whyplay cleaning
+
+``` {r, cleaningwhyplay}
+clean_responses <- function(response) {
+  response <- trimws(tolower(response))  # Normalize to lowercase and trim whitespace
+  
+  # Check for exact matches first
+  if (response %in% c("winning", "improving", "relaxing", "having fun")) {
+    return(response)
+  }
+  
+  # Check for various conditions to set the response
+  if (str_detect(response, "^a[\\s,\\.]", ) || 
+      str_detect(response, "^1[\\s,\\.]", ) || 
+      str_detect(response, "^all") || 
+      str_detect(response, "^mix") || 
+      str_detect(response, "combination") || 
+      str_detect(response, "everything")) {
+    return("all of the above")
+  }
+  
+  if (str_detect(response, "distraction|escaping|escape|forget|hide|hiding|depression|boredom|bored|time|forgetting|distracting|doing something|getting away from real life|trying to get my mind off")) {
+    return("escape")
+  }
+
+  if (str_detect(response, "improve|improving|learn|learning")) {
+    return("improving")
+  }
+  
+  if (str_detect(response, "well|perform|performing")) {
+    return("winning")
+  }
+  
+  if (str_detect(response, "social|socializing|friends|team|cooperating|i don't know anymore|occupied|making my brain go numb|the people i play with, the game is less important")) {
+    return("social")
+  }
+  
+  if (str_detect(response, "win|winning|beating|victory|competeing|competing|competition|conpeting")) {
+    return("winning")
+  }
+  
+  if (str_detect(response, "winning") && str_detect(response, "improving")) {
+    return("mix")
+  }
+  
+  if (str_detect(response, "relaxing") && str_detect(response, "fun")) {
+    return("mix")
+  }
+  
+  if (str_detect(response, "combination|all")) {
+    return("mix")
+  }
+  
+  if (str_detect(response, "fun")) {
+    return("having fun")
+  }
+  
+  # Default to original response if no condition is met
+  return("bad response")
+}
+
+# Apply the cleaning function to the 'whyplay' column
+df$cleaned_whyplay <- sapply(df$whyplay, clean_responses)
+
+# Count the occurrences of each cleaned response
+whyplay_counts <- as.data.frame(table(df$cleaned_whyplay))
+
+# Print the counts for verification
+print(whyplay_counts)
+```
+
+#PLaystyle cleaning
+
+```{r}
+
+# Function to standardize Playstyle responses
+standardize_playstyle <- function(playstyle) {
+  playstyle <- trimws(tolower(playstyle))  # Normalize to lowercase and trim whitespace
+  
+  # Standardize to SinglePlayer category
+  if (str_detect(playstyle, "single|solo|1v1 matchmaking|one person|yolo queue") || 
+      playstyle %in% c("singleplayer", 
+                       "singleplayer - online", 
+                       "single player - speedrunning", 
+                       "singleplayer, but streaming", 
+                       "solo q", 
+                       "soloqueue", 
+                       "solo que", 
+                       "by myself/with 1 friend whilst communicating our soloq experiences with each other over skype")) {
+    return("SinglePlayer")
+  }
+  
+  # Standardize to Both Type category
+  if (str_detect(playstyle, "mix|mixed|mixture|both|all|sometimes|everything|sometimes solo|a combination|usually combination of all|an equal mix|last 3 options") || 
+      playstyle %in% c("mutliplayer - a mix of friends/strangers.",
+                       "mix of real life friends and online acquaintances",
+                       "a mixture of all of them",
+                       "mix of online teammates and real life friends",
+                       "mix between singleplayer and mutliplayer with real life friends",
+                       "multiplayer - online - mix of real life friends and strangers",
+                       "sometimes alone (ranked), sometimes with friends. everytime there are strangers in my game ofc",
+                       "used to be the last option only, but in the last two weeks only singleplayer",
+                       "its really a bit of all",
+                       "everything from above in the same amount",
+                       "single/multi same amount",
+                       "its a mixture of both single player and online with strangers",
+                       "singleplayer and multiplayer online with strangers",
+                       "i'm versatile",
+                       "friends online, also solo player",
+                       "everything almost equally",
+                       "singleplayer - online - talking with real life friends",
+                       "singleplayer and multiplayer with real life friends or strangers",
+                       "duo queue with one good friend, else solo",
+                       "depends",
+                       "its pretty 33%: sp(ksp), mp friends(cs), mp strangers(lol)",
+                       "all of em ?",
+                       "mix of all",
+                       "both single and online with friends",
+                       "both multi- and singleplayer with both friends and strangers",
+                       "with all the above")) {
+    return("Both Type")
+  }
+  
+  # Default to Multiplayer for all other responses
+  return("Multiplayer")
+}
+
+# Apply the cleaning function to the 'Playstyle' column
+gaming_data$Playstyle <- sapply(gaming_data$Playstyle, standardize_playstyle)
+
+# Count the occurrences of each standardized Playstyle
+playstyle_counts <- as.data.frame(table(gaming_data$Playstyle))
+
+# Print the counts for verification
+print(playstyle_counts)
+
+
+
+```
+
+
+## Chi-squared for Playstyle and WhyPlay
+
+null hypothesis is that there is no relation. Alternate is that there is.
+
+```{r contingency table}
+
+# Create a contingency table between cleaned_whyplay and Playstyle
+contingency_table <- table(gaming_data$Playstyle, df$cleaned_whyplay)
+
+# Print the contingency table
+print(contingency_table)
+
+```
+
+
+```{r chi-squared test}
+
+chi_squared_test <- chisq.test(contingency_table)
+print(chi_squared_test)
 
 ```
