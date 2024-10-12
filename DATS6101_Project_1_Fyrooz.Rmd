@@ -195,144 +195,9 @@ hist(hrs_GAD_filtered_clean$Hours, main = "Histogram of Hours Spent Gaming", xla
 boxplot(hrs_GAD_filtered_clean$Hours, main = "Boxplot of Hours Spent Gaming", xlab = "Hours spent (per week)", col = "lightblue")
 ```
 
-# Cleaning the Playstyle Data and creating new dataframe with Whyplay
-```{r}
+# Cleaning the Playstyle Data and Whyplay
 
-# Define the patterns for each category
-singleplayer_patterns <- c(
-  "Singleplayer", "Singleplayer - online", "Single player - speedrunning",
-  "Singleplayer, but streaming", "1v1 matchmaking", 
-  "By myself/with 1 friend whilst communicating our soloq experiences with each other over skype",
-  "solo q", "Soloqueue", "Solo Que", "One person", "Yolo queue"
-)
-
-both_type_patterns <- c(
-  "Mutliplayer - A mix of friends/strangers.", 
-  "mix of real life friends and online acquaintances", "A mixture of all of them", 
-  "Mix of online teammates and real life friends", 
-  "Mix between Singleplayer and Multilayer with real life friends",
-  "Multiplayer - online - mix of real life friends and strangers",
-  "Sometimes alone \\(Ranked\\), sometimes with friends. Everytime there are strangers in my game ofc",
-  "A combination of all of the above", "It's really a bit of all",
-  "Used to be the last option only, but in the last two weeks only singleplayer",
-  "all", "Alone and with online acquaintances", "both", 
-  "some times solo, other with friends", 
-  "pretty much balanced of all you listed", "Everything from above in the same amount",
-  "Single/Multi same amount", "Its a mixture of both single player and online with strangers",
-  "all of above", "Singleplayer and multiplayer online with strangers",
-  "Skyrim Single player, League with friends", "I'm versatile", 
-  "Solo queue/Duo queue", "friends online, also solo player",
-  "Everything almost equally", 
-  "Singleplayer - online - talking with real life friends", 
-  "singleplayer and multiplayer with real life friends or strangers",
-  "Duo Queue with one good friend, else solo", "Depends",
-  "Its pretty 33%: SP\\(KSP\\), MP friends\\(CS\\), MP strangers\\(LoL\\))",
-  "all of em \\?", "mix of all", "Both Single and Online with friends",
-  "Everything", "sometimes soloq, sometimes with friends",
-  "Both multi- and singleplayer with both friends and strangers",
-  "With all the above", "usually combination of all", "an equal mix", 
-  "last 3 options", "all of the above", "single/multi offline", 
-  "singleplayer, multiplayer with acquaintances, and multiplayer with real life friends"
-)
-
-# Define a function to categorize the play styles
-categorize_playstyle <- function(playstyle) {
-  if (any(sapply(singleplayer_patterns, function(pattern) grepl(pattern, playstyle, ignore.case = TRUE)))) {
-    return("SinglePlayer")
-  } else if (any(sapply(both_type_patterns, function(pattern) grepl(pattern, playstyle, ignore.case = TRUE)))) {
-    return("Both Type")
-  } else {
-    return("Multiplayer")
-  }
-}
-
-# Apply the function to the Playstyle column and create a new column
-gaming_data <- gaming_data %>%
-  mutate(Playstyle_Standardized = sapply(Playstyle, categorize_playstyle))
-
-# Extract the necessary columns to create the new dataframe
-df_playstyle_whyplay <- gaming_data %>%
-  select(Playstyle_Standardized, whyplay)
-
-# View the new dataframe
-head(df_playstyle_whyplay)
-
-
-```
-
-
-#whyplay cleaning
-
-``` {r, cleaningwhyplay}
-clean_responses <- function(response) {
-  response <- trimws(tolower(response))  # Normalize to lowercase and trim whitespace
-  
-  # Check for exact matches first
-  if (response %in% c("winning", "improving", "relaxing", "having fun")) {
-    return(response)
-  }
-  
-  # Check for various conditions to set the response
-  if (str_detect(response, "^a[\\s,\\.]", ) || 
-      str_detect(response, "^1[\\s,\\.]", ) || 
-      str_detect(response, "^all") || 
-      str_detect(response, "^mix") || 
-      str_detect(response, "combination") || 
-      str_detect(response, "everything")) {
-    return("all of the above")
-  }
-  
-  if (str_detect(response, "distraction|escaping|escape|forget|hide|hiding|depression|boredom|bored|time|forgetting|distracting|doing something|getting away from real life|trying to get my mind off")) {
-    return("escape")
-  }
-
-  if (str_detect(response, "improve|improving|learn|learning")) {
-    return("improving")
-  }
-  
-  if (str_detect(response, "well|perform|performing")) {
-    return("winning")
-  }
-  
-  if (str_detect(response, "social|socializing|friends|team|cooperating|i don't know anymore|occupied|making my brain go numb|the people i play with, the game is less important")) {
-    return("social")
-  }
-  
-  if (str_detect(response, "win|winning|beating|victory|competeing|competing|competition|conpeting")) {
-    return("winning")
-  }
-  
-  if (str_detect(response, "winning") && str_detect(response, "improving")) {
-    return("mix")
-  }
-  
-  if (str_detect(response, "relaxing") && str_detect(response, "fun")) {
-    return("mix")
-  }
-  
-  if (str_detect(response, "combination|all")) {
-    return("mix")
-  }
-  
-  if (str_detect(response, "fun")) {
-    return("having fun")
-  }
-  
-  # Default to original response if no condition is met
-  return("bad response")
-}
-
-# Apply the cleaning function to the 'whyplay' column
-df$cleaned_whyplay <- sapply(df$whyplay, clean_responses)
-
-# Count the occurrences of each cleaned response
-whyplay_counts <- as.data.frame(table(df$cleaned_whyplay))
-
-# Print the counts for verification
-print(whyplay_counts)
-```
-
-#PLaystyle cleaning
+# Playstyle cleaning
 
 ```{r}
 
@@ -397,19 +262,87 @@ playstyle_counts <- as.data.frame(table(gaming_data$Playstyle))
 # Print the counts for verification
 print(playstyle_counts)
 
-
-
 ```
 
+# whyplay cleaning
 
-## Chi-squared for Playstyle and WhyPlay
+``` {r, cleaningwhyplay}
+clean_responses <- function(response) {
+  response <- trimws(tolower(response))  # Normalize to lowercase and trim whitespace
+  
+  # Check for exact matches first
+  if (response %in% c("winning", "improving", "relaxing", "having fun")) {
+    return(response)
+  }
+  
+  # Check for various conditions to set the response
+  if (str_detect(response, "^a[\\s,\\.]", ) || 
+      str_detect(response, "^1[\\s,\\.]", ) || 
+      str_detect(response, "^all") || 
+      str_detect(response, "^mix") || 
+      str_detect(response, "combination") || 
+      str_detect(response, "everything")) {
+    return("all of the above")
+  }
+  
+  if (str_detect(response, "distraction|escaping|escape|forget|hide|hiding|depression|boredom|bored|time|forgetting|distracting|doing something|getting away from real life|trying to get my mind off")) {
+    return("escape")
+  }
 
-null hypothesis is that there is no relation. Alternate is that there is.
+  if (str_detect(response, "improve|improving|learn|learning")) {
+    return("improving")
+  }
+  
+  if (str_detect(response, "well|perform|performing")) {
+    return("winning")
+  }
+  
+  if (str_detect(response, "social|socializing|friends|team|cooperating|i don't know anymore|occupied|making my brain go numb|the people i play with, the game is less important")) {
+    return("social")
+  }
+  
+  if (str_detect(response, "win|winning|beating|victory|competeing|competing|competition|conpeting")) {
+    return("winning")
+  }
+  
+  if (str_detect(response, "winning") && str_detect(response, "improving")) {
+    return("mix")
+  }
+  
+  if (str_detect(response, "relaxing") && str_detect(response, "fun")) {
+    return("mix")
+  }
+  
+  if (str_detect(response, "combination|all")) {
+    return("mix")
+  }
+  
+  if (str_detect(response, "fun")) {
+    return("having fun")
+  }
+  
+  # Default to original response if no condition is met
+  return("bad response")
+}
+
+# Apply the cleaning function to the 'whyplay' column
+gaming_data$cleaned_whyplay <- sapply(gaming_data$whyplay, clean_responses)
+
+# Count the occurrences of each cleaned response
+whyplay_counts <- as.data.frame(table(gaming_data$cleaned_whyplay))
+
+# Print the counts for verification
+print(whyplay_counts)
+```
+
+## Chi-squared test for Playstyle and WhyPlay
+
+Null hypothesis is that there is no relation. Alternate is that there is.
 
 ```{r contingency table}
 
 # Create a contingency table between cleaned_whyplay and Playstyle
-contingency_table <- table(gaming_data$Playstyle, df$cleaned_whyplay)
+contingency_table <- table(gaming_data$Playstyle, gaming_data$cleaned_whyplay)
 
 # Print the contingency table
 print(contingency_table)
