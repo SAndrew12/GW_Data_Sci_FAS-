@@ -1,0 +1,915 @@
+---
+title: "Project 1 Exploratory Data Analysis (EDA)"
+author: "Stephen Davanzo, Fyrooz Khan, Anith Muthalaly"
+# date: "today"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: show
+    number_sections: false
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+---
+
+```{r init, include=F}
+library(ezids)
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(rstatix)
+library(knitr)
+library(kableExtra)
+library(reshape2)
+```
+
+
+```{r setup, include=FALSE}
+# some of common options (and the defaults) are: 
+# include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
+knitr::opts_chunk$set(warning = F, results = "markup", message = F)
+options(scientific=T, digits = 3) 
+```
+
+## 1 - Iventory of information
+
+General Anxiety Disorder-7 (GAD): <br>
+- measures severity of anxiety <br>
+0 - 4 : minimal anxiety <br>
+5 - 9 : mild anxiety <br>
+10 - 14 : moderate anxiety <br>
+15 - 21 : severe anxiety <br>
+
+Satisfaction With Life SWL-7 (SWL)<br>
+- measures and individual's perceived satisfaction with life<br>
+31 - 35 : extremely satisfied <br>
+26 - 30 : satisfied <br>
+21 -25 : slightly satisfied <br>
+20 : neutral <br>
+15 - 19 : slightly dissatisfied <br>
+10 - 14 : dissatisfied <br>
+5 - 9 : extremely dissatisfied <br>
+
+Social Phobia Inventory (SPIN)<br>
+- Used to identify or monitor social anxiety disorder (social phobia)<br>
+0 - 20 : none<br>
+21 - 30 : mild<br>
+31 - 40 : moderate<br>
+41 - 50 : severe<br>
+51 - 68 : very severe <br>
+
+Generalized Anxiety disorder, Effect in Life (GADE) <br>
+- If respondent checked off any problems during GAD-7 "how difficult have these problems made your..."<br>
+ 
+ 
+Narcissism <br>
+- to what extent do you agree with with this statement, "I am a narcissist" <br>
+
+```{r read-in, include=TRUE}
+df <- read_csv("G:\\My Drive\\Flash Drive Contents\\E\\Graduate School\\The George Washington Univeristy\\Data Science\\DATS 6101_12 (Morris)\\Project 1\\GamingStudy_data.csv")
+glimpse(df)
+```
+
+
+```{r, results='asis'}
+# # Changing variable names (HW #3)
+# colnames(mlb)[4:6]=c("height","weight","age")
+# # The line above produces no output. To see the changes, use str() or head()
+# xkabledplyhead(mlb, title = "Header rows for mlb dataset")
+```
+
+## 2 - Make raw scores ordinal
+``` {r, ord}
+# Function to convert GAD_T to ordinal variable
+convert_GAD <- function(score) {
+  if (is.na(score)) return(NA)  # Handle NA values
+  if (score >= 0 & score <= 4) {
+    return("minimal anxiety")
+  } else if (score >= 5 & score <= 9) {
+    return("mild anxiety")
+  } else if (score >= 10 & score <= 14) {
+    return("moderate anxiety")
+  } else if (score >= 15 & score <= 21) {
+    return("severe anxiety")
+  } else {
+    return(NA)  # Handles scores outside defined range
+  }
+}
+
+# Function to convert GADE to ordinal variable
+convert_GADE <- function(difficulty) {
+  if (is.na(difficulty)) return(NA)  # Handle NA values
+  if (difficulty == "Not difficult at all") {
+    return("Not difficult")
+  } else if (difficulty == "Somewhat difficult") {
+    return("Somewhat difficult")
+  } else if (difficulty == "Very difficult") {
+    return("Very difficult")
+  } else if (difficulty == "Extremely difficult") {
+    return("Extremely difficult")
+  } else {
+    return(NA)  # Handles unexpected values
+  }
+}
+
+# Function to convert SWL_T to ordinal variable
+convert_SWL <- function(score) {
+  if (is.na(score)) return(NA)  # Handle NA values
+  if (score >= 31 & score <= 35) {
+    return("extremely satisfied")
+  } else if (score >= 26 & score <= 30) {
+    return("satisfied")
+  } else if (score >= 21 & score <= 25) {
+    return("slightly satisfied")
+  } else if (score == 20) {
+    return("neutral")
+  } else if (score >= 15 & score <= 19) {
+    return("slightly dissatisfied")
+  } else if (score >= 10 & score <= 14) {
+    return("dissatisfied")
+  } else if (score >= 5 & score <= 9) {
+    return("extremely dissatisfied")
+  } else {
+    return(NA)  # Handles scores outside defined range
+  }
+}
+
+# Function to convert SPIN_T to ordinal variable
+convert_SPIN <- function(score) {
+  if (is.na(score)) return(NA)  # Handle NA values
+  if (score >= 0 & score <= 20) {
+    return("none")
+  } else if (score >= 21 & score <= 30) {
+    return("mild")
+  } else if (score >= 31 & score <= 40) {
+    return("moderate")
+  } else if (score >= 41 & score <= 50) {
+    return("severe")
+  } else if (score >= 51 & score <= 68) {
+    return("very severe")
+  } else {
+    return(NA)  # Handles scores outside defined range
+  }
+}
+
+# Group hours played into categories
+convert_hours <- function(hours) {
+  if (is.na(hours)) return(NA)  # Handle NA values
+  if (hours >= 0 & hours <= 10) {
+    return("Low")
+  } else if (hours > 10 & hours <= 20) {
+    return("Moderate")
+  } else if (hours > 20 & hours <= 30) {
+    return("High")
+  } else if (hours > 30) {
+    return("Very High")
+  } else {
+    return(NA)  # Handles any unexpected values
+  }
+}
+
+# Create new columns in the data frame
+df$GAD_ord <- sapply(df$GAD_T, convert_GAD)
+df$GADE_ord <- sapply(df$GADE, convert_GADE)
+df$SWL_ord <- sapply(df$SWL_T, convert_SWL)
+df$SPIN_ord <- sapply(df$SPIN_T, convert_SPIN)
+df$hours_ord <- sapply(df$Hours, convert_hours)
+
+#make values ordinal (min to max)
+df$GAD_ord <- factor(df$GAD_ord, 
+                     levels = c("minimal anxiety", "mild anxiety", "moderate anxiety", "severe anxiety"), 
+                     ordered = TRUE)
+
+df$GADE_ord <- factor(df$GADE_ord, 
+                      levels = c("Not difficult", "Somewhat difficult", "Very difficult", "Extremely difficult"), 
+                      ordered = TRUE)
+
+df$SWL_ord <- factor(df$SWL_ord, 
+                     levels = c("extremely satisfied", "satisfied", "slightly satisfied", "neutral", 
+                                "slightly dissatisfied", "dissatisfied", "extremely dissatisfied"), 
+                     ordered = TRUE)
+
+df$SPIN_ord <- factor(df$SPIN_ord, 
+                      levels = c("none", "mild", "moderate", "severe", "very severe"), 
+                      ordered = TRUE)
+
+
+df$hours_ord <- factor(df$hours_ord, 
+                            levels = c("Low", "Moderate", "High", "Very High"), 
+                            ordered = TRUE)
+
+# Print the updated data frames
+print(df$GAD_ord)
+print(df$GADE_ord)
+print(df$SWL_ord)
+print(df$SPIN_ord)
+print(df$hours_ord)
+```
+
+## 3 - Plot Variables
+### a- Game Played (cat)
+
+``` {r, gameplot}
+game_counts <- as.data.frame(table(df$Game))
+colnames(game_counts) <- c("Game", "SurveyCount")
+game_counts <- game_counts[order(-game_counts$SurveyCount), ]
+
+# Create the plot
+fig <- ggplot(game_counts, aes(x = reorder(Game, -SurveyCount), y = SurveyCount)) +
+  geom_bar(stat = 'identity', fill = '#232A75') +
+  labs(title = 'Game Distribution', 
+       subtitle = '', 
+       x = '', 
+       y = 'Total Surveyors') +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_minimal()  +
+ theme(plot.title = element_text(hjust = 0.5))
+# Print the figure
+print(fig)
+```
+
+### b - Gender (cat)
+
+``` {r, genderplot}
+gender_counts <- as.data.frame(table(df$Gender))
+colnames(gender_counts) <- c("Gender", "SurveyCount")
+gender_counts <- gender_counts[order(-gender_counts$SurveyCount), ]
+
+# Create the plot
+fig <- ggplot(gender_counts, aes(x = reorder(Gender, -SurveyCount), y = SurveyCount)) +
+  geom_bar(stat = 'identity', fill = '#232A75') +
+  labs(title = 'Gender Distribution', 
+       subtitle = '', 
+       x = '', 
+       y = 'Total Respondents') +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_minimal()  +
+ theme(plot.title = element_text(hjust = 0.5))
+
+# Print the figure
+print(fig)
+```
+
+### c- whyplay
+
+``` {r, cleaningwhyplay}
+clean_responses <- function(response) {
+  response <- trimws(tolower(response))  # Normalize to lowercase and trim whitespace
+  
+  # Check for exact matches first
+  if (response %in% c("winning", "improving", "relaxing", "having fun")) {
+    return(response)
+  }
+  
+  # Check for various conditions to set the response
+  if (str_detect(response, "^a[\\s,\\.]", ) || 
+      str_detect(response, "^1[\\s,\\.]", ) || 
+      str_detect(response, "^all") || 
+      str_detect(response, "^mix") || 
+      str_detect(response, "combination") || 
+      str_detect(response, "everything")) {
+    return("all of the above")
+  }
+  
+  if (str_detect(response, "distraction|escaping|escape|forget|hide|hiding|depression|boredom|bored|time|forgetting|distracting|doing something|getting away from real life|trying to get my mind off")) {
+    return("escape")
+  }
+
+  if (str_detect(response, "improve|improving|learn|learning")) {
+    return("improving")
+  }
+  
+  if (str_detect(response, "well|perform|performing")) {
+    return("winning")
+  }
+  
+  if (str_detect(response, "social|socializing|friends|team|cooperating|i don't know anymore|occupied|making my brain go numb|the people i play with, the game is less important")) {
+    return("social")
+  }
+  
+  if (str_detect(response, "win|winning|beating|victory|competeing|competing|competition|conpeting")) {
+    return("winning")
+  }
+  
+  if (str_detect(response, "winning") && str_detect(response, "improving")) {
+    return("mix")
+  }
+  
+  if (str_detect(response, "relaxing") && str_detect(response, "fun")) {
+    return("mix")
+  }
+  
+  if (str_detect(response, "combination|all")) {
+    return("mix")
+  }
+  
+  if (str_detect(response, "fun")) {
+    return("having fun")
+  }
+  
+  # Default to original response if no condition is met
+  return("bad response")
+}
+
+# Apply the cleaning function to the 'whyplay' column
+df$cleaned_whyplay <- sapply(df$whyplay, clean_responses)
+
+# Count the occurrences of each cleaned response
+whyplay_counts <- as.data.frame(table(df$cleaned_whyplay))
+```
+
+```{r, why }
+
+colnames(whyplay_counts) <- c("WhyPlay", "SurveyCount")
+
+
+whyplay_counts <- whyplay_counts[order(-whyplay_counts$SurveyCount), ]
+
+
+whyplay_counts$WhyPlay <- factor(whyplay_counts$WhyPlay, levels = whyplay_counts$WhyPlay)
+
+
+fig <- ggplot(whyplay_counts, aes(x = WhyPlay, y = SurveyCount)) +
+  geom_bar(stat = 'identity', fill = '#232A75') +
+  labs(title = 'Reasons for Playing', 
+       subtitle = '', 
+       caption = 'Data Source: Survey Data', 
+       x = 'Reasons for Playing', 
+       y = 'Total Respondents') +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+print(fig)
+```
+
+### d - Age (num)
+
+``` {r, age}
+age_counts <- as.data.frame(table(df$Age))
+colnames(age_counts) <- c("Age", "SurveyCount")
+age_counts <- age_counts[order(-age_counts$SurveyCount), ]
+
+# Create the plot
+fig <- ggplot(age_counts, aes(x = reorder(Age, -SurveyCount), y = SurveyCount)) +
+  geom_bar(stat = 'identity', fill = '#232A75') +
+  labs(title = 'Age Distribution', 
+       subtitle = '', 
+       x = 'Age', 
+       y = 'Total Respondents') +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_minimal()  +
+ theme(plot.title = element_text(hjust = 0.5))
+
+# Print the figure
+print(fig)
+
+```
+
+
+### e - Hours (num)
+
+``` {r, hours}
+
+hour_counts <- as.data.frame(table(df$Hours))
+colnames(hour_counts) <- c("Hours", "SurveyCount")
+hour_counts <- hour_counts[order(-hour_counts$SurveyCount), ]
+
+# Create the plot
+fig <- ggplot(hour_counts, aes(x = reorder(Hours, -SurveyCount), y = SurveyCount)) +
+  geom_bar(stat = 'identity', fill = '#232A75') +
+  labs(title = 'Hours Distribution', 
+       subtitle = '', 
+       x = 'Hours', 
+       y = 'Total Respondents') +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_minimal()   +
+ theme(plot.title = element_text(hjust = 0.5))
+# Print the figure
+print(fig)
+```
+
+
+### f - streams (num)
+
+``` {r, streams}
+stream_counts <- as.data.frame(table(df$streams))
+colnames(stream_counts) <- c("Streams", "SurveyCount")
+
+# Sort the data
+stream_counts <- stream_counts[order(-stream_counts$SurveyCount), ]
+
+# Convert Streams to a factor with levels based on sorted order
+stream_counts$Streams <- factor(stream_counts$Streams, levels = stream_counts$Streams)
+
+# Create the plot
+fig <- ggplot(stream_counts, aes(x = Streams, y = SurveyCount)) +
+  geom_bar(stat = 'identity', fill = '#232A75') +
+  labs(title = 'Streams Distribution', 
+       subtitle = '', 
+       caption = 'Data Source: Survey Data', 
+       x = 'Streams', 
+       y = 'Total Respondents') +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Print the figure
+print(fig)
+```
+
+## 4 - Outliers and QQ Plots
+
+```{r, outlier_gad}
+ggplot(df, aes(y=GAD_T)) + 
+  geom_boxplot() + 
+  geom_boxplot( colour="red", fill="gray", outlier.colour="black", outlier.shape=8, outlier.size=4) +
+  labs(title="Boxplot GAD", x="", y = "Score")
+
+qqnorm(df$GAD_T, main="Q-Q plot for GAD") 
+qqline(df$GAD_T)
+```
+
+```{r, outlier_swl}
+ggplot(df, aes(y=SWL_T)) + 
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="gray", outlier.colour="black", outlier.shape=8, outlier.size=4) +
+  labs(title="Boxplot SWL", x="", y = "Score")
+
+qqnorm(df$SWL_T, main="Q-Q plot for SWL") 
+qqline(df$SWL_T)
+```
+
+```{r, outlier_spin}
+ggplot(df, aes(y=SPIN_T)) + 
+  geom_boxplot() + 
+  geom_boxplot( colour="purple", fill="gray", outlier.colour="black", outlier.shape=8, outlier.size=4) +
+  labs(title="Boxplot SPIN", x="", y = "Score")
+
+qqnorm(df$SPIN_T, main="Q-Q plot for SPIN") 
+qqline(df$SPIN_T)
+```
+
+
+## 5 - EDA Plots
+
+
+```{r, gaddist}
+ggplot(data = df, aes(x = GAD_T)) +
+  geom_histogram(binwidth = 1,
+                 color = "red",
+                 fill = "blue",
+                 alpha = .7) + # opacity
+  labs(x = "GAD Total Score", y = "Frequency", title = "GAD Distribution") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r, gaddistt}
+ggplot(data = df, aes(x = GAD_T)) +
+  geom_histogram(aes(y = ..density..),  # Use density for y-axis
+                 binwidth = 1,
+                 color = "red",
+                 fill = "blue",
+                 alpha = 0.7) +  # Opacity
+  geom_density(color = "green",          # Color of the KDE curve
+               size = 1,                 # Thickness of the curve
+               adjust = 1) +             # Adjust bandwidth for fitting
+  labs(x = "GAD Total Score", 
+       y = "Density",                 # Change to Density for y-axis
+       title = "GAD Distribution with KDE") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+```{r, swldist}
+ggplot(data = df, aes(x = SWL_T)) +
+  geom_histogram(binwidth = 1,
+                 color = "pink",
+                 fill = "green",
+                 alpha = .7) + # opacity
+  labs(x = "SWL Total Score", y = "Frequency", title = "SWL Distribution") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r, spindist}
+ggplot(data = df, aes(x = SPIN_T)) +
+  geom_histogram(binwidth = 1,
+                 color = "orange",
+                 fill = "purple",
+                 alpha = .7) + # opacity
+  labs(x = "SPIN Total Score", y = "Frequency", title = "SPIN Distribution") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+## 6 - Applying logarithmic transformations to GAD and SPIN to make them more normal
+
+```{r, logtransgad}
+# Log-transform the GAD_T column (adding 1 to avoid log(0))
+df$log_GAD_T <- log(df$GAD_T + 1)
+
+# Create the histogram with a KDE curve
+ggplot(data = df, aes(x = log_GAD_T)) +
+  geom_histogram(aes(y = ..density..),  # Use density for y-axis
+                 binwidth = 0.5,
+                 color = "red",
+                 fill = "blue",
+                 alpha = 0.7) +  # Opacity
+  geom_density(color = "green",           # Color of the KDE curve
+               size = 1,                  # Thickness of the curve
+               adjust = 1) +              # Adjust bandwidth for fitting
+  labs(x = "GAD Log Total Score", 
+       y = "Density",                   # Change to Density for y-axis
+       title = "GAD Log Distribution with KDE") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+qqnorm(df$log_GAD_T, main="Q-Q plot for Log GAD") 
+qqline(df$log_GAD_T)
+```
+
+
+```{r, logtransswl}
+# Log-transform the SPIN_T column (adding 1 to avoid log(0))
+df$log_SPIN_T <- log(df$SPIN_T + 1)
+
+# Create the histogram with a KDE curve
+ggplot(data = df, aes(x = log_SPIN_T)) +
+  geom_histogram(aes(y = ..density..),  # Use density for y-axis
+                 binwidth = 1,
+                 color = "orange",
+                 fill = "purple",
+                 alpha = 0.7) +  # Opacity
+  geom_density(color = "blue",           # Color of the KDE curve
+               size = 1,                 # Thickness of the curve
+               adjust = 1) +             # Adjust bandwidth for fitting
+  labs(x = "SPIN Log Total Score", 
+       y = "Density",                  # Change to Density for y-axis
+       title = "SPIN Log Distribution with KDE") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+qqnorm(df$log_SPIN_T, main="Q-Q plot for Log SPIN") 
+qqline(df$log_SPIN_T)
+
+
+```
+
+```{r}
+# boxplot(mlb$height, main="Boxplot of Baseball Player Height", ylab="Height (inches)", col = 'red' )
+# ggplot(mlb, aes(y=height)) + 
+#   geom_boxplot() + 
+#   geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+#   labs(title="Boxplot of Baseball Player Height using `ggplot`", x="", y = "Height (inches)")
+```
+
+Now the Q-Q plot, adding a theoretical line to the plot.
+
+```{r}
+# qqnorm(mlb$height, main="Q-Q plot of Baseball Player Heights") 
+# qqline(mlb$height)
+# shapiro.test(mlb$height) # Shapiro-Wilk test for normality
+# ks.test(mlb$height,pnorm) # Kolmogorov-Smirnov Tests against normal distribution
+```
+
+We'll talk more about the shapiro test after we introduce formal statistical testings. In the meantime, we can look into other EDA tools and techniques.
+
+## 7 - Standardizing GAD, SWL, and SPIN variables
+``` {r, standardizing}
+df$GAD_T_Stand <- scale(df$GAD_T)
+df$SWL_T_Stand <- scale(df$SWL_T)
+df$SPIN_T_Stand <- scale(df$SPIN_T)
+```
+
+``` {r, plotting_newGAD}
+ggplot(data = df, aes(x = GAD_T_Stand)) +
+  geom_histogram(binwidth = 1,
+                 color = "red",
+                 fill = "blue",
+                 alpha = .7) + # opacity
+  labs(x = "GAD Standardized", y = "Frequency", title = "GAD Stand Distribution") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+qqnorm(df$GAD_T_Stand, main="Q-Q plot for Stand GAD") 
+qqline(df$GAD_T_Stand)
+```
+
+``` {r, plotting_newSWL}
+# Create the histogram with a KDE curve
+ggplot(data = df, aes(x = SWL_T_Stand)) +
+  geom_histogram(aes(y = ..density..),  # Use density for y-axis
+                 binwidth = 1,
+                 color = "orange",
+                 fill = "purple",
+                 alpha = 0.7) +  # Opacity
+  geom_density(color = "blue",           # Color of the KDE curve
+               size = 1,                 # Thickness of the curve
+               adjust = 1) +             # Adjust bandwidth for fitting
+  labs(x = "GAD Stand Log Total Score", 
+       y = "Density",                  # Change to Density for y-axis
+       title = "GAD Stand Distribution with KDE") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+qqnorm(df$SWL_T_Stand, main="Q-Q plot for Stand SWL") 
+qqline(df$SWL_T_Stand)
+```
+
+``` {r, plotting_newSPIN}
+# Create the histogram with a KDE curve
+ggplot(data = df, aes(x = SPIN_T_Stand)) +
+  geom_histogram(aes(y = ..density..),  # Use density for y-axis
+                 binwidth = 1,
+                 color = "orange",
+                 fill = "purple",
+                 alpha = 0.7) +  # Opacity
+  geom_density(color = "blue",           # Color of the KDE curve
+               size = 1,                 # Thickness of the curve
+               adjust = 1) +             # Adjust bandwidth for fitting
+  labs(x = "GAD Stand Log Total Score", 
+       y = "Density",                  # Change to Density for y-axis
+       title = "GAD Stand Distribution with KDE") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+qqnorm(df$SPIN_T_Stand, main="Q-Q plot for Stand SPIN") 
+qqline(df$SPIN_T_Stand)
+
+mean_spin = mean(df$SPIN_T_Stand, na.rm = TRUE)
+mean_spin
+```
+
+## 8 - Pearson's Correlation and ANOVA Testing
+### a - SWL and Hours (Pearson's Correlation)
+``` {r, corr_h_swl}
+cor_test_SWL <- cor.test(df$Hours, df$SWL_T)
+correlation_result_SWL <- cor(df$Hours, df$SWL_T, method = "pearson", use = "complete.obs")
+cor_test_SWL
+```
+
+The Pearson's Correlation Coefficient between Hours and  SWL_T is `r format(correlation_result_SWL, nsmall = 4)`. This very weak negative correlation means that an increase in hours played slightly results in a lower SWL score (less life satisfaction).
+
+### b - SWL and Hours (ANOVA)
+
+Null Hypothesis (H₀): There is no significant difference in life satisfaction levels (SWL_T) across the different hours played categories. $\mu$<sub>low</sub> = $\mu$<sub>moderate</sub> = $\mu$<sub>high</sub> = $\mu$<sub>very high</sub>.
+
+Alternate Hypothesis (H₁): There is a significant difference in life satisfaction levels  across the different hours played categories.
+
+```{r, swl_ANOVA}
+# Perform one-way ANOVA
+anova_result_SWL <- aov(SWL_T ~ hours_ord, data = df)
+p_SWL <- summary(anova_result_SWL)[[1]]$`Pr(>F)`[1]
+summary(anova_result_SWL)
+```
+
+Since p << 0.05 (p = `r format(p_SWL, digits = 3)`), we reject the null hypothesis. This means that there is a significant effect hours per week of play time has on a person's total satisfaction with life score.
+
+### c - GAD and Hours (Pearson's Correlation)
+``` {r, corr_h_gad}
+cor_test_GAD <- cor.test(df$Hours, df$GAD_T)
+correlation_result_GAD <- cor(df$Hours, df$GAD_T, method = "pearson", use = "complete.obs")
+cor_test_GAD
+```
+
+The Pearson's Correlation Coefficient between Hours and  GAD_T is `r format(correlation_result_GAD, nsmall = 4)`. This is a very weak positive correlation, which means that an increase in hours played is associated with a slightly higher GAD score (slightly more likely to experience generalized anxiety).
+
+### d - GAD and Hours (ANOVA)
+Null Hypothesis (H₀): There is no significant difference in generalized anxiety disorder scores (GAD_T) across the different hours played categories. $\mu$<sub>low</sub> = $\mu$<sub>moderate</sub> = $\mu$<sub>high</sub> = $\mu$<sub>very high</sub>.
+
+Alternate Hypothesis (H₁): There is a significant difference in generalized anxiety disorder scores across the different hours played categories.
+
+```{r gad_ANOVA}
+# Perform one-way ANOVA
+anova_result_GAD <- aov(GAD_T ~ hours_ord, data = df)
+p_GAD <- summary(anova_result_GAD)[[1]]$`Pr(>F)`[1]
+summary(anova_result_GAD)
+```
+
+Since p << 0.05 (p = `r format(p_GAD, digits = 3)`), we reject the null hypothesis. This means that there is a significant effect hours per week of play time has on a person's total generalized anxiety disorder score.
+
+### e - SPIN and Hours (Pearson's Correlation)
+``` {r, corr_h_spin}
+cor_test_SPIN <- cor.test(df$Hours, df$SPIN_T)
+correlation_result_SPIN <- cor(df$Hours, df$SPIN_T, method = "pearson", use = "complete.obs")
+cor_test_SPIN
+```
+
+The Pearson's Correlation Coefficient between Hours and  SPIN_T is `r format(correlation_result_SPIN, nsmall = 4)`. This is a very weak positive correlation, which means that an increase in hours played is associated with a slightly higher SPIN score (slightly more likely to experience social phobias).
+
+### f - SPIN and Hours (ANOVA)
+Null Hypothesis (H₀): There is no significant difference in social phobia inventory scores (SPIN_T) across the different hours played categories. $\mu$<sub>low</sub> = $\mu$<sub>moderate</sub> = $\mu$<sub>high</sub> = $\mu$<sub>very high</sub>.
+
+Alternate Hypothesis (H₁): There is a significant difference in social phobia inventory scores across the different hours played categories.
+
+```{r spin_ANOVA}
+# Perform one-way ANOVA
+anova_result_SPIN <- aov(SPIN_T ~ hours_ord, data = df)
+p_SPIN <- summary(anova_result_SPIN)[[1]]$`Pr(>F)`[1]
+summary(anova_result_SPIN)
+```
+
+Since p << 0.05 (p = `r format(p_SPIN, digits = 3)`), we reject the null hypothesis. This means that there is a significant effect hours per week of play time has on a person's total social phobia inventory score.
+
+### g - Hours and Streams (Pearson's Correlation)
+```{r, corr_h_s}
+cor_test <- cor.test(df$Hours, df$streams)
+correlation_result_Hours_Streams <- cor(df$Hours, df$streams, method = "pearson", use = "complete.obs")
+cor_test
+```
+
+The Pearson's Correlation Coefficient between Hours and  SPIN_T is `r format(correlation_result_Hours_Streams, nsmall = 3)`. This is a very strong positive correlation, which means that an increase in hours played is associated with higher amounts of time spent streaming video games.
+
+### g - Hours and Streams (ANOVA)
+Null Hypothesis (H₀): There is no significant difference in time spent streaming video games and the different hours played categories. $\mu$<sub>low</sub> = $\mu$<sub>moderate</sub> = $\mu$<sub>high</sub> = $\mu$<sub>very high</sub>.
+
+Alternate Hypothesis (H₁): There is a significant difference in  time spent streaming video games and the different hours played categories.
+```{r hours_streams_ANOVA}
+# Perform one-way ANOVA
+anova_result_Hours_Streams <- aov(streams ~ hours_ord, data = df)
+p_Hours_Streams <- summary(anova_result_Hours_Streams)[[1]]$`Pr(>F)`[1]
+summary(anova_result_Hours_Streams)
+```
+
+Since p << 0.05 (p = `r format(p_Hours_Streams, digits = 3)`), we reject the null hypothesis. This means that there is a significant effect hours per week of play time has on a person's total streaming time.
+
+## 9 - Chi-Squared Testing 
+### a - GAD and WhyPlay
+Null Hypothesis (H₀): Experiencing symptoms of Generalized Anxiety Disorder and the reason for playing video games are independent of each other.
+
+Alternate Hypothesis (H₁): Experiencing symptoms of Generalized Anxiety Disorder and the reason for playing video games are not independent. There is some sort of association between them.
+ 
+```{r contingency_GAD, include=TRUE}
+contingency_table_GAD <- table(df$GAD_ord, df$cleaned_whyplay)
+
+# Print the contingency table
+print(contingency_table_GAD)
+
+chi_squared_test_GAD <- chisq.test(contingency_table_GAD)
+p_GAD_whyplay <- chi_squared_test_GAD$p.value
+
+# Print the results of the Chi-squared test
+chi_squared_test_GAD
+```
+
+Since p << 0.05 (p = `r format(p_GAD_whyplay, digits = 3)`), we reject the null hypothesis. This means that there is sufficient evidence to suggest an association between experiencing symptoms of Generalized Anxiety Disorder and the reason for playing video games.
+
+### b - GADE and WhyPlay
+Null Hypothesis (H₀): Being a functional person in society (measured by GADE) and the reason for playing video games are independent of each other.
+
+Alternate Hypothesis (H₁):  Being a functional person in society and the reason for playing video games are not independent. There is some sort of association between them.
+
+```{r contingency_GADE, include=TRUE}
+contingency_table_GADE <- table(df$GADE_ord, df$cleaned_whyplay)
+
+# Print the contingency table
+print(contingency_table_GADE)
+
+chi_squared_test_GADE <- chisq.test(contingency_table_GADE)
+p_GADE_whyplay <- chi_squared_test_GADE$p.value
+
+# Print the results of the Chi-squared test
+chi_squared_test_GADE
+```
+
+Since p << 0.05 (p = `r format(p_GADE_whyplay, digits = 3)`), we reject the null hypothesis. This means that there is sufficient evidence to suggest an association between being a functional person in society, as measured by GADE, and the reason for playing video games.
+
+### c - Post-hoc analysis 
+
+``` {r, posthoc}
+expected_counts <- chisq.test(contingency_table_GAD)$expected
+
+# Calculate residuals
+residuals <- contingency_table_GAD - expected_counts
+
+# Calculate adjusted residuals
+adjusted_residuals <- residuals / sqrt(expected_counts)
+
+# Print adjusted residuals
+print(adjusted_residuals)
+
+residuals_df <- melt(adjusted_residuals)
+
+# Create a heatmap
+ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "GAD and WhyPlay Adjusted Residuals Heatmap", x = "Variable 1", y = "Variable 2") +
+  theme_minimal()
+
+contingency_df <- as.data.frame(contingency_table_GAD)
+
+# Plot
+ggplot(contingency_df, aes(x = Var1, y = Freq, fill = Var2)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "GAD Ordinal Categories", y = "Frequency", fill = "Why Play") +
+  theme_minimal()
+```
+
+### d - chi-squared for SPIN and WhyPlay
+Null Hypothesis (H₀): Experiencing social phobias and the reason for playing video games are independent of each other.
+
+Alternate Hypothesis (H₁): Experiencing social phobias and the reason for playing video games are not independent. There is some sort of association between them.
+
+```{r contingency2, include=TRUE}
+contingency_table <- table(df$SPIN_ord, df$cleaned_whyplay)
+
+# Print the contingency table
+print(contingency_table)
+
+chi_squared_test <- chisq.test(contingency_table)
+p_SPIN_whyplay <- chi_squared_test$p.value
+
+# Print the results of the Chi-squared test
+chi_squared_test
+```
+
+Since p << 0.05 (p = `r format(p_SPIN_whyplay, digits = 3)`), we reject the null hypothesis. This means that there is sufficient evidence to suggest an association between being experiencing social phobias and the reason for playing video games.
+
+### e - Post-hoc analysis 
+
+``` {r, posthoc2}
+expected_counts <- chisq.test(contingency_table)$expected
+
+# Calculate residuals
+residuals <- contingency_table - expected_counts
+
+# Calculate adjusted residuals
+adjusted_residuals <- residuals / sqrt(expected_counts)
+
+# Print adjusted residuals
+print(adjusted_residuals)
+
+residuals_df <- melt(adjusted_residuals)
+
+# Create a heatmap
+ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "SPIN and WhyPlay Adjusted Residuals Heatmap", x = "Variable 1", y = "Variable 2") +
+  theme_minimal()
+
+contingency_df <- as.data.frame(contingency_table)
+
+# Plot
+ggplot(contingency_df, aes(x = Var1, y = Freq, fill = Var2)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "SPIN Ordinal Categories", y = "Frequency", fill = "Why Play") +
+  theme_minimal()
+```
+
+### f - chi-squared for SWL and WhyPlay
+Null Hypothesis (H₀): Satisfaction with life and the reason for playing video games are independent of each other.
+
+Alternate Hypothesis (H₁): Satisfaction with life and the reason for playing video games are not independent. There is some sort of association between them.
+
+```{r contingency3, include=TRUE}
+contingency_table_SWL_whyplay <- table(df$SWL_ord, df$cleaned_whyplay)
+
+# Print the contingency table
+print(contingency_table_SWL_whyplay)
+
+chi_squared_test_SWL_whyplay <- chisq.test(contingency_table_SWL_whyplay)
+p_SWL_whyplay <- chi_squared_test_SWL_whyplay$p.value
+
+# Print the results of the Chi-squared test
+chi_squared_test_SWL_whyplay
+```
+
+Since p << 0.05 (p = `r format(p_SWL_whyplay, digits = 3)`), we reject the null hypothesis. This means that there is sufficient evidence to suggest an association between satisfaction with life and the reason for playing video games.
+
+### g - Post-hoc analysis 
+
+``` {r, posthoc3}
+expected_counts <- chisq.test(contingency_table_SWL_whyplay)$expected
+
+# Calculate residuals
+residuals <- contingency_table_SWL_whyplay - expected_counts
+
+# Calculate adjusted residuals
+adjusted_residuals <- residuals / sqrt(expected_counts)
+
+# Print adjusted residuals
+print(adjusted_residuals)
+
+
+residuals_df <- melt(adjusted_residuals)
+
+# Create a heatmap
+ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "SWL and WhyPlay Adjusted Residuals Heatmap", x = "Variable 1", y = "Variable 2") +
+  theme_minimal()
+
+contingency_df <- as.data.frame(contingency_table_SWL_whyplay)
+
+# Plot
+ggplot(contingency_df, aes(x = Var1, y = Freq, fill = Var2)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "SWL Ordinal Categories", y = "Frequency", fill = "Why Play") +
+  theme_minimal()
+```
