@@ -67,7 +67,7 @@ Narcissism <br>
 - to what extent do you agree with with this statement, "I am a narcissist" <br>
 
 ```{r read-in, include=TRUE}
-df <- read_csv("C:\\Users\\steph\\Desktop\\datasci_projects\\GW_Data_Sci_FAS-\\GamingStudy_data.csv")
+df <- read_csv("GamingStudy_data.csv")
 glimpse(df)
 ```
 

@@ -1,0 +1,1040 @@
+---
+title: "DATS6101_Project_1"
+author: "Stephen, Anith, Fyrooz"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    code_folding: hide
+    number_sections: false
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+```{r setup, include=FALSE}
+library(ezids)
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(infer)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Topic and Dataset
+
+Video games offer an escape from reality for many, but we don’t know what people are going through psychologically when they play them. Our team has decided to work on an online gaming anxiety dataset to determine if we can find gaming habits related to mental health outcomes. This dataset, found on Kaggle, was scraped from the Center for Open Science's site which was in turn collected as a part of a survey by the original authors: Marian Sauter and Dejan Draschkow. It has 13,464 observations (respondents) from 109 countries. <br>
+
+*Dataset: https://www.kaggle.com/datasets/divyansh22/online-gaming-anxiety-data/data* <br>
+
+The variables are:  
+
+Variable |  Definition  
+  :-:    |  :-- 
+GAD: Generalized Anxiety Disorder -- measures severity of anxiety <br>
+GAD1 to GAD7: scale of severity of the Generalized Anxiety Disorder 7-item scale (GAD-7) <br>
+GAD_T: Total score on the GAD-7 scale <br>
+
+SWL: Satisfaction With Life -- measures and individual's perceived satisfaction with life <br>
+SWL1 to SWL5: scale of the Satisfaction With Life Scale (SWLS) <br>
+SWL_T: Total score on the Satisfaction With Life Scale <br>
+
+GADE: Generalized Anxiety Disorder Effect in Life -- If you checked off any problems, how difficult have these made it for you to do your work, take care of things at home, or get along with other people? <br>
+
+Game: The name of the game most frequently played by the respondent <br>
+Platform: The gaming platform used by the respondent (e.g., PC, console) <br>
+Hours: Hours spent gaming per week <br>
+earnings: Monetary Earnings <br>
+whyplay: Reasons for playing the game <br>
+League: Professional Gaming League, if applicable <br>
+highestleague: Highest league or level achieved in the game <br>
+streams: Time Spent watching Steams, Tournaments, etc besides playing. <br>
+
+SPIN: Social Phobia Inventory -- Used to identify or monitor social anxiety disorder (social phobia) <br>
+SPIN1 to SPIN17: scale of the Social Phobia Inventory <br>
+SPIN_T: Total score on the Social Phobia Inventory <br>
+
+Narcissism: Score on a Narcissism assessment -- Agree or Disagree being some level of a Narcissist <br>
+
+Gender: Gender of the respondent <br>
+Age: Age of the respondent <br>
+Work: Employment status of the respondent <br>
+Degree: Highest degree attained by the respondent <br>
+Birthplace: Birthplace of the respondent <br>
+Residence: Current residence of the respondent <br>
+Reference: Method how study was made known to participant <br>
+Playstyle: The respondent’s playstyle in the game (Single/ Multiplayer) <br>
+accept: Acceptance or consent to participate in the survey or study <br>
+
+Residence_ISO3: ISO 3166-1 alpha-3 code for the respondent’s residence country <br>
+Birthplace_ISO3: ISO 3166-1 alpha-3 code for the respondent’s birthplace country <br>
+
+```{r summry_gaming data}
+library(knitr)
+gaming_data = read.csv("GamingStudy_data.csv", header=T)
+head(gaming_data)
+summary(gaming_data)
+```
+# Check for missing values
+```{r}
+sum(is.na(gaming_data))
+```
+# Check missing values per column
+```{r}
+missing_values <- colSums(is.na(gaming_data))
+print(missing_values)
+```
+
+
+
+
+# Replace missing values in the Hours column with NA explicitly
+```{r}
+hrs_data_cleaned <- gaming_data %>%
+  mutate(Hours = ifelse(is.na(Hours), NA, Hours))
+missing_values <- colSums(is.na(hrs_data_cleaned))
+print(missing_values)
+```
+
+# Filter necessary columns
+```{r}
+hrs_GAD_filtered <- hrs_data_cleaned %>%
+  select(Hours, GAD1:GAD7, GAD_T)
+```
+
+
+# Summary of the filtered dataset
+```{r}
+summary(hrs_GAD_filtered)
+```
+
+
+## Ouliers Visualizations
+
+# Finding outliers in Hours
+
+```{r}
+ggplot(hrs_GAD_filtered, aes(x=Hours)) + 
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Outliers in Hours spent gaming per week", x="Hours spent (per week)", y = "")
+
+```
+
+# Removing outliers in Hours and creating new dataset
+
+```{r}
+# Define the outlierKD2 function
+outlierKD2 <- function(dt, var, rm = TRUE, boxplt = TRUE, qqplt = TRUE) { 
+  var_name <- eval(substitute(var),eval(dt))
+  na1 <- sum(is.na(var_name))
+  m1 <- mean(var_name, na.rm = TRUE)
+  
+  # Generate plots (boxplot and histogram)
+  if (boxplt) {
+    par(mfrow = c(2, 2), oma = c(0, 0, 3, 0))
+    boxplot(var_name, main = "With outliers")
+    hist(var_name, main = "With outliers", xlab = NA, ylab = NA)
+  }
+  
+  outlier <- boxplot.stats(var_name)$out
+  mo <- mean(outlier)
+  
+  var_name <- ifelse(var_name %in% outlier, NA, var_name)
+  
+  if (boxplt) {
+    boxplot(var_name, main = "Without outliers")
+    hist(var_name, main = "Without outliers", xlab = NA, ylab = NA)
+  }
+  
+  # Generate QQ plot if requested
+  if (qqplt) {
+    qqnorm(var_name)
+    qqline(var_name)
+  }
+  
+  na2 <- sum(is.na(var_name))
+  
+  cat("Outliers identified:", na2 - na1, "\n")
+  cat("Proportion (%) of outliers:", round((na2 - na1) / sum(!is.na(var_name)) * 100, 1), "\n")
+  cat("Mean of the outliers:", round(mo, 2), "\n")
+  m2 <- mean(var_name, na.rm = TRUE)
+  cat("Mean without removing outliers:", round(m1, 2), "\n")
+  cat("Mean if we remove outliers:", round(m2, 2), "\n")
+  
+  # Option to remove outliers (replace with NA)
+  if (rm) {
+    dt[[as.character(substitute(var))]] <- invisible(var_name)
+    assign(as.character(as.list(match.call())$dt), dt, envir = .GlobalEnv)
+    cat("Outliers successfully removed\n")
+    return(invisible(dt))
+  } else {
+    cat("Nothing changed\n")
+    return(invisible(var_name))
+  }
+}
+
+# Assume hrs_GAD_filtered is your dataset
+# Use outlierKD2 to remove outliers from 'Hours'
+hrs_GAD_filtered_clean <- outlierKD2(hrs_GAD_filtered, Hours, rm = TRUE, boxplt = TRUE, qqplt = TRUE)
+
+# Check the structure of the cleaned dataset
+str(hrs_GAD_filtered_clean)
+
+# Summary to verify the changes
+summary(hrs_GAD_filtered_clean)
+
+```
+
+
+# Create a histogram and boxplot for Cleaned Hours
+
+```{r}
+hist(hrs_GAD_filtered_clean$Hours, main = "Histogram of Hours Spent Gaming", xlab = "Hours spent (per week)", col = "lightblue")
+boxplot(hrs_GAD_filtered_clean$Hours, main = "Boxplot of Hours Spent Gaming", xlab = "Hours spent (per week)", col = "lightblue")
+```
+
+# Finding outliers in Age
+
+```{r}
+ggplot(gaming_data, aes(x=Age)) + 
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Outliers in Age", x="Age", y = "")
+
+```
+# Removing outliers in Age and creating new dataset
+
+```{r}
+# Define the outlierKD2 function (assuming it's not already defined in your environment)
+outlierKD2 <- function(dt, var, rm = TRUE, boxplt = TRUE, qqplt = TRUE) { 
+  var_name <- eval(substitute(var),eval(dt))
+  na1 <- sum(is.na(var_name))
+  m1 <- mean(var_name, na.rm = TRUE)
+  
+  # Generate plots (boxplot and histogram)
+  if (boxplt) {
+    par(mfrow = c(2, 2), oma = c(0, 0, 3, 0))
+    boxplot(var_name, main = "With outliers")
+    hist(var_name, main = "With outliers", xlab = NA, ylab = NA)
+  }
+  
+  outlier <- boxplot.stats(var_name)$out
+  mo <- mean(outlier)
+  
+  var_name <- ifelse(var_name %in% outlier, NA, var_name)
+  
+  if (boxplt) {
+    boxplot(var_name, main = "Without outliers")
+    hist(var_name, main = "Without outliers", xlab = NA, ylab = NA)
+  }
+  
+  # Generate QQ plot if requested
+  if (qqplt) {
+    qqnorm(var_name)
+    qqline(var_name)
+  }
+  
+  na2 <- sum(is.na(var_name))
+  
+  cat("Outliers identified:", na2 - na1, "\n")
+  cat("Proportion (%) of outliers:", round((na2 - na1) / sum(!is.na(var_name)) * 100, 1), "\n")
+  cat("Mean of the outliers:", round(mo, 2), "\n")
+  m2 <- mean(var_name, na.rm = TRUE)
+  cat("Mean without removing outliers:", round(m1, 2), "\n")
+  cat("Mean if we remove outliers:", round(m2, 2), "\n")
+  
+  # Option to remove outliers (replace with NA)
+  if (rm) {
+    dt[[as.character(substitute(var))]] <- invisible(var_name)
+    assign(as.character(as.list(match.call())$dt), dt, envir = .GlobalEnv)
+    cat("Outliers successfully removed\n")
+    return(invisible(dt))
+  } else {
+    cat("Nothing changed\n")
+    return(invisible(var_name))
+  }
+}
+
+# Assume gaming_data is your dataset
+# Use outlierKD2 to remove outliers from 'Age'
+gaming_data_clean <- outlierKD2(gaming_data, Age, rm = TRUE, boxplt = TRUE, qqplt = TRUE)
+
+# Check the structure of the cleaned dataset
+str(gaming_data_clean)
+
+# Summary to verify the changes
+summary(gaming_data_clean)
+
+
+```
+# Create a histogram and boxplot for Cleaned Age
+
+```{r}
+hist(gaming_data_clean$Age, main = "Histogram of Age (cleaned data)", xlab = "Age (cleaned data)", col = "lightblue")
+boxplot(gaming_data_clean$Age, main = "Boxplot of Age (cleaned data)", xlab = "Age (cleaned data)", col = "lightblue")
+```
+
+# Finding outliers in Streams
+
+```{r}
+ggplot(gaming_data, aes(x=streams)) + 
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Outliers in streams", x="streams", y = "")
+
+```
+
+# Removing outliers in Streams and creating new dataset
+
+```{r}
+# Define the outlierKD2 function 
+outlierKD2 <- function(dt, var, rm = TRUE, boxplt = TRUE, qqplt = TRUE) { 
+  var_name <- eval(substitute(var),eval(dt))
+  na1 <- sum(is.na(var_name))
+  m1 <- mean(var_name, na.rm = TRUE)
+  
+  # Generate plots (boxplot and histogram)
+  if (boxplt) {
+    par(mfrow = c(2, 2), oma = c(0, 0, 3, 0))
+    boxplot(var_name, main = "With outliers")
+    hist(var_name, main = "With outliers", xlab = NA, ylab = NA)
+  }
+  
+  outlier <- boxplot.stats(var_name)$out
+  mo <- mean(outlier)
+  
+  var_name <- ifelse(var_name %in% outlier, NA, var_name)
+  
+  if (boxplt) {
+    boxplot(var_name, main = "Without outliers")
+    hist(var_name, main = "Without outliers", xlab = NA, ylab = NA)
+  }
+  
+  # Generate QQ plot if requested
+  if (qqplt) {
+    qqnorm(var_name)
+    qqline(var_name)
+  }
+  
+  na2 <- sum(is.na(var_name))
+  
+  cat("Outliers identified:", na2 - na1, "\n")
+  cat("Proportion (%) of outliers:", round((na2 - na1) / sum(!is.na(var_name)) * 100, 1), "\n")
+  cat("Mean of the outliers:", round(mo, 2), "\n")
+  m2 <- mean(var_name, na.rm = TRUE)
+  cat("Mean without removing outliers:", round(m1, 2), "\n")
+  cat("Mean if we remove outliers:", round(m2, 2), "\n")
+  
+  # Option to remove outliers (replace with NA)
+  if (rm) {
+    dt[[as.character(substitute(var))]] <- invisible(var_name)
+    assign(as.character(as.list(match.call())$dt), dt, envir = .GlobalEnv)
+    cat("Outliers successfully removed\n")
+    return(invisible(dt))
+  } else {
+    cat("Nothing changed\n")
+    return(invisible(var_name))
+  }
+}
+
+# Use outlierKD2 to remove outliers from 'streams'
+gaming_data_clean <- outlierKD2(gaming_data, streams, rm = TRUE, boxplt = TRUE, qqplt = TRUE)
+
+# Check the structure of the cleaned dataset
+str(gaming_data_clean)
+
+# Summary to verify the changes
+summary(gaming_data_clean)
+
+```
+
+# Create a histogram and boxplot for Cleaned Streams
+
+```{r}
+hist(gaming_data_clean$streams, main = "Histogram of Time Spent watching Steams, Tournaments, etc. (hrs/week)
+", xlab = "Time Spent watching Steams, Tournaments, etc. (hrs/week)
+ ", col = "lightblue")
+boxplot(gaming_data_clean$streams, main = "Boxplot of Time Spent watching Steams, Tournaments, etc. (hrs/week)", xlab = "Time Spent watching Steams, Tournaments, etc. (hrs/week)", col = "lightblue")
+```
+
+# Cleaning the Playstyle Data and Whyplay
+
+# Playstyle cleaning
+
+```{r}
+
+# Function to standardize Playstyle responses
+standardize_playstyle <- function(playstyle) {
+  playstyle <- trimws(tolower(playstyle))  # Normalize to lowercase and trim whitespace
+  
+  # Standardize to SinglePlayer category
+  if (str_detect(playstyle, "single|solo|1v1 matchmaking|one person|yolo queue") || 
+      playstyle %in% c("singleplayer", 
+                       "singleplayer - online", 
+                       "single player - speedrunning", 
+                       "singleplayer, but streaming", 
+                       "solo q", 
+                       "soloqueue", 
+                       "solo que", 
+                       "by myself/with 1 friend whilst communicating our soloq experiences with each other over skype")) {
+    return("SinglePlayer")
+  }
+  
+  # Standardize to Both Type category
+  if (str_detect(playstyle, "mix|mixed|mixture|both|all|sometimes|everything|sometimes solo|a combination|usually combination of all|an equal mix|last 3 options") || 
+      playstyle %in% c("mutliplayer - a mix of friends/strangers.",
+                       "mix of real life friends and online acquaintances",
+                       "a mixture of all of them",
+                       "mix of online teammates and real life friends",
+                       "mix between singleplayer and mutliplayer with real life friends",
+                       "multiplayer - online - mix of real life friends and strangers",
+                       "sometimes alone (ranked), sometimes with friends. everytime there are strangers in my game ofc",
+                       "used to be the last option only, but in the last two weeks only singleplayer",
+                       "its really a bit of all",
+                       "everything from above in the same amount",
+                       "single/multi same amount",
+                       "its a mixture of both single player and online with strangers",
+                       "singleplayer and multiplayer online with strangers",
+                       "i'm versatile",
+                       "friends online, also solo player",
+                       "everything almost equally",
+                       "singleplayer - online - talking with real life friends",
+                       "singleplayer and multiplayer with real life friends or strangers",
+                       "duo queue with one good friend, else solo",
+                       "depends",
+                       "its pretty 33%: sp(ksp), mp friends(cs), mp strangers(lol)",
+                       "all of em ?",
+                       "mix of all",
+                       "both single and online with friends",
+                       "both multi- and singleplayer with both friends and strangers",
+                       "with all the above")) {
+    return("Both Type")
+  }
+  
+  # Default to Multiplayer for all other responses
+  return("Multiplayer")
+}
+
+# Apply the cleaning function to the 'Playstyle' column
+gaming_data$Playstyle <- sapply(gaming_data$Playstyle, standardize_playstyle)
+
+# Count the occurrences of each standardized Playstyle
+playstyle_counts <- as.data.frame(table(gaming_data$Playstyle))
+
+# Print the counts for verification
+print(playstyle_counts)
+
+```
+
+# whyplay cleaning
+
+``` {r, cleaningwhyplay}
+clean_responses <- function(response) {
+  response <- trimws(tolower(response))  # Normalize to lowercase and trim whitespace
+  
+  # Check for exact matches first
+  if (response %in% c("winning", "improving", "relaxing", "having fun")) {
+    return(response)
+  }
+  
+  # Check for various conditions to set the response
+  if (str_detect(response, "^a[\\s,\\.]", ) || 
+      str_detect(response, "^1[\\s,\\.]", ) || 
+      str_detect(response, "^all") || 
+      str_detect(response, "^mix") || 
+      str_detect(response, "combination") || 
+      str_detect(response, "everything")) {
+    return("all of the above")
+  }
+  
+  if (str_detect(response, "distraction|escaping|escape|forget|hide|hiding|depression|boredom|bored|time|forgetting|distracting|doing something|getting away from real life|trying to get my mind off")) {
+    return("escape")
+  }
+
+  if (str_detect(response, "improve|improving|learn|learning")) {
+    return("improving")
+  }
+  
+  if (str_detect(response, "well|perform|performing")) {
+    return("winning")
+  }
+  
+  if (str_detect(response, "social|socializing|friends|team|cooperating|i don't know anymore|occupied|making my brain go numb|the people i play with, the game is less important")) {
+    return("social")
+  }
+  
+  if (str_detect(response, "win|winning|beating|victory|competeing|competing|competition|conpeting")) {
+    return("winning")
+  }
+  
+  if (str_detect(response, "winning") && str_detect(response, "improving")) {
+    return("mix")
+  }
+  
+  if (str_detect(response, "relaxing") && str_detect(response, "fun")) {
+    return("mix")
+  }
+  
+  if (str_detect(response, "combination|all")) {
+    return("mix")
+  }
+  
+  if (str_detect(response, "fun")) {
+    return("having fun")
+  }
+  
+  # Default to original response if no condition is met
+  return("bad response")
+}
+
+# Apply the cleaning function to the 'whyplay' column
+gaming_data$cleaned_whyplay <- sapply(gaming_data$whyplay, clean_responses)
+
+# Count the occurrences of each cleaned response
+whyplay_counts <- as.data.frame(table(gaming_data$cleaned_whyplay))
+
+# Print the counts for verification
+print(whyplay_counts)
+```
+
+## Chi-squared test for Playstyle and WhyPlay
+
+Null hypothesis is that there is no relation. Alternate is that there is.
+
+```{r contingency table}
+
+# Create a contingency table between cleaned_whyplay and Playstyle
+contingency_table <- table(gaming_data$Playstyle, gaming_data$cleaned_whyplay)
+
+# Print the contingency table
+print(contingency_table)
+
+```
+
+
+```{r chi-squared test}
+
+chi_squared_test <- chisq.test(contingency_table)
+print(chi_squared_test)
+
+```
+
+##Barcharts
+#Playstyle based on why they play
+
+```{r}
+ggplot(gaming_data, aes(x = Playstyle, fill = cleaned_whyplay)) +
+geom_bar()
+
+```
+#Playstyle based on why they play
+```{r}
+
+ggplot(gaming_data, aes(x = Playstyle, fill = Platform)) +
+geom_bar()
+
+
+```
+
+
+#Work status based on residence
+```{r}
+# Summarize the data to get counts of each Residence
+residence_counts <- gaming_data %>%
+  group_by(Residence) %>%
+  summarize(count = n())
+
+# Filter for Residence values with counts greater than 500
+filtered_residences <- residence_counts %>%
+  filter(count > 500) %>%
+  select(Residence)
+
+# Join with the original data to keep only the relevant Residence values
+filtered_data <- gaming_data %>%
+  semi_join(filtered_residences, by = "Residence")
+
+# Create the bar chart with the filtered data
+ggplot(filtered_data, aes(x = Residence, fill = Work)) +
+  geom_bar() +
+  labs(title = "Bar chart depicting Countries where most games 
+  are played from based on employment status",
+       x = "Residence",
+       y = "Count") +
+  theme_minimal()
+
+```
+
+# Turning into ordinal
+
+```{r}
+## Make raw scores ordinal
+# Function to convert GAD_T to ordinal variable
+convert_GAD <- function(score) {
+  if (is.na(score)) return(NA)  # Handle NA values
+  if (score >= 0 & score <= 4) {
+    return("minimal anxiety")
+  } else if (score >= 5 & score <= 9) {
+    return("mild anxiety")
+  } else if (score >= 10 & score <= 14) {
+    return("moderate anxiety")
+  } else if (score >= 15 & score <= 21) {
+    return("severe anxiety")
+  } else {
+    return(NA)  # Handles scores outside defined range
+  }
+}
+
+# Function to convert SWL_T to ordinal variable
+convert_SWL <- function(score) {
+  if (is.na(score)) return(NA)  # Handle NA values
+  if (score >= 31 & score <= 35) {
+    return("extremely satisfied")
+  } else if (score >= 26 & score <= 30) {
+    return("satisfied")
+  } else if (score >= 21 & score <= 25) {
+    return("slightly satisfied")
+  } else if (score == 20) {
+    return("neutral")
+  } else if (score >= 15 & score <= 19) {
+    return("slightly dissatisfied")
+  } else if (score >= 10 & score <= 14) {
+    return("dissatisfied")
+  } else if (score >= 5 & score <= 9) {
+    return("extremely dissatisfied")
+  } else {
+    return(NA)  # Handles scores outside defined range
+  }
+}
+
+# Function to convert SPIN_T to ordinal variable
+convert_SPIN <- function(score) {
+  if (is.na(score)) return(NA)  # Handle NA values
+  if (score >= 0 & score <= 20) {
+    return("none")
+  } else if (score >= 21 & score <= 30) {
+    return("mild")
+  } else if (score >= 31 & score <= 40) {
+    return("moderate")
+  } else if (score >= 41 & score <= 50) {
+    return("severe")
+  } else if (score >= 51 & score <= 68) {
+    return("very severe")
+  } else {
+    return(NA)  # Handles scores outside defined range
+  }
+}
+
+
+# Create new columns in the data frame
+gaming_data$GAD_ord <- sapply(gaming_data$GAD_T, convert_GAD)
+gaming_data$SWL_ord <- sapply(gaming_data$SWL_T, convert_SWL)
+gaming_data$SPIN_ord <- sapply(gaming_data$SPIN_T, convert_SPIN)
+
+#make values ordinal (min to max)
+gaming_data$GAD_ord <- factor(gaming_data$GAD_ord, 
+                     levels = c("minimal anxiety", "mild anxiety", "moderate anxiety", "severe anxiety"), 
+                     ordered = TRUE)
+
+gaming_data$SWL_ord <- factor(gaming_data$SWL_ord, 
+                     levels = c("extremely satisfied", "satisfied", "slightly satisfied", "neutral", 
+                                "slightly dissatisfied", "dissatisfied", "extremely dissatisfied"), 
+                     ordered = TRUE)
+
+gaming_data$SPIN_ord <- factor(gaming_data$SPIN_ord, 
+                      levels = c("none", "mild", "moderate", "severe", "very severe"), 
+                      ordered = TRUE)
+
+```
+
+# GAD_T_ordinal based on why they play
+```{r GAD_ord vs why_play}
+
+ggplot(gaming_data, aes(x = GAD_ord, fill = cleaned_whyplay)) +
+geom_bar()
+
+
+ggplot(gaming_data, aes(x = GAD_ord, fill = cleaned_whyplay)) +
+  geom_bar(position = "fill") +  # Use position = "fill" to show proportions
+  ylab("Proportion") +            # Label the y-axis
+  labs(title = "Proportion of cleaned_whyplay by GAD_ord") +  # Add a title
+  theme_minimal()      
+
+```
+
+# SPIN_ord_ordinal based on why they play
+```{r SPIN_ord vs why_play}
+
+ggplot(gaming_data, aes(x = SPIN_ord, fill = cleaned_whyplay)) +
+geom_bar()
+
+
+ggplot(gaming_data, aes(x = SPIN_ord, fill = cleaned_whyplay)) +
+  geom_bar(position = "fill") +  # Use position = "fill" to show proportions
+  ylab("Proportion") +            # Label the y-axis
+  labs(title = "Proportion of cleaned_whyplay by SPIN_ord") +  # Add a title
+  theme_minimal()      
+
+```
+
+
+# GAD_ordinal based on GADE
+```{r GAD_ord vs why_play}
+
+ggplot(gaming_data, aes(x = GAD_ord, fill = GADE)) +
+geom_bar()
+
+
+ggplot(gaming_data, aes(x = GAD_ord, fill = GADE)) +
+  geom_bar(position = "fill") +  # Use position = "fill" to show proportions
+  ylab("Proportion") +            # Label the y-axis
+  labs(title = "Proportion of GAD_ordinal by their effect on their life") +  # Add a title
+  theme_minimal()      
+
+```
+
+# Age (cleaned) distribution on GAD_ordinal based
+```{r GAD_ord vs why_play}
+ggplot(gaming_data, aes(x = gaming_data_clean$Age)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
+  facet_wrap(~ GAD_ord) +
+  labs(title = "Histogram of Age sitribution by GAD_ordinal",
+       x = "Age",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+# Hrs played distribution on GAD_ordinal based
+```{r GAD_ord vs why_play}
+ggplot(gaming_data, aes(x = hrs_GAD_filtered_clean$Hours)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
+  facet_wrap(~ GAD_ord) +
+  labs(title = "Histogram of Hrs played/week ditribution by GAD_ordinal",
+       x = "Hours played/week",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+
+
+# Hours played/week by SWL_ord
+```{r }
+ggplot(gaming_data, aes(x = hrs_GAD_filtered_clean$Hours)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
+  facet_wrap(~ SWL_ord) +
+  labs(title = "Histogram of Hours played/week by SWL_ord",
+       x = "Hours played/week",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+
+# Hours played/week by SPIN_ord
+```{r }
+ggplot(gaming_data, aes(x = hrs_GAD_filtered_clean$Hours)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
+  facet_wrap(~ SPIN_ord) +
+  labs(title = "Histogram of Hours played/week by SPIN_ord",
+       x = "Hours played/week",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+
+
+# Hours played/week by why_play
+```{r }
+ggplot(gaming_data, aes(x = hrs_GAD_filtered_clean$Hours)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
+  facet_wrap(~ cleaned_whyplay) +
+  labs(title = "Histogram of Hours played/week by Whyplay",
+       x = "Hours played/week",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+##Converting Narcicism to Ordinal >> Confused about the scale >> 1 indicates agree or disagree?
+```{r}
+# Function to convert Narcissism scores to ordinal variable
+convert_narcissism <- function(score) {
+  if (is.na(score)) return(NA)  # Handle NA values
+  if (score == 1) {
+    return("Not very true")
+  } else if (score == 2) {
+    return("Somewhat true")
+  } else if (score == 3) {
+    return("Moderately true")
+  } else if (score == 4) {
+    return("Mostly true")
+  } else if (score == 5) {
+    return("Very true")
+  } else {
+    return(NA)  # Handles scores outside defined range
+  }
+}
+
+# Apply the function to the Narcissism column
+gaming_data$Narcissism_ord <- sapply(gaming_data$Narcissism, convert_narcissism)
+
+# Convert the result into an ordered factor
+gaming_data$Narcissism_ord <- factor(gaming_data$Narcissism_ord, 
+                                     levels = c("Not very true", "Somewhat true", "Moderately true", "Mostly true", "Very true"), 
+                                     ordered = TRUE)
+
+# Verify the conversion
+table(gaming_data$Narcissism_ord)
+
+```
+
+# Hours played/week by level of Narcissism
+
+```{r}
+
+ggplot(gaming_data, aes(x = hrs_GAD_filtered_clean$Hours, fill = Narcissism_ord)) +
+geom_density(alpha = .3)
+
+
+```
+
+## Standardizing 
+``` {r, standardizing}
+gaming_data_clean$streams_Stand <- scale(gaming_data_clean$streams)
+hrs_GAD_filtered_clean$hours_Stand <- scale(hrs_GAD_filtered_clean$Hours)
+gaming_data_clean$age_Stand <- scale(gaming_data_clean$Age)
+```
+
+``` {r, plotting_streams}
+# Histogram for standardized Streams
+ggplot(data = gaming_data_clean, aes(x = streams_Stand)) +
+  geom_histogram(binwidth = 1, color = "red", fill = "blue", alpha = .7) +
+  labs(x = "Streams Standardized", y = "Frequency", title = "Streams Stand Distribution") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Q-Q plot for standardized Streams
+qqnorm(gaming_data_clean$streams_Stand, main = "Q-Q plot for Stand Streams")
+qqline(gaming_data_clean$streams_Stand)
+
+```
+
+```{r}
+# Histogram with KDE for standardized Streams
+ggplot(data = gaming_data_clean, aes(x = streams_Stand)) +
+  geom_histogram(aes(y = ..density..),  # Use density for y-axis
+                 binwidth = 1,
+                 color = "orange",
+                 fill = "purple",
+                 alpha = 0.7) +  # Opacity
+  geom_density(color = "blue",           # Color of the KDE curve
+               size = 1,                 # Thickness of the curve
+               adjust = 1) +             # Adjust bandwidth for fitting
+  labs(x = "Streams Standardized", 
+       y = "Density",                  # Change to Density for y-axis
+       title = "Streams Stand Distribution with KDE") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+
+
+```
+
+
+```{r, plotting_hours}
+# Histogram for standardized Hours
+ggplot(data = hrs_GAD_filtered_clean, aes(x = hours_Stand)) +
+  geom_histogram(binwidth = 1, color = "red", fill = "blue", alpha = .7) +
+  labs(x = "Hours Standardized", y = "Frequency", title = "Hours Stand Distribution") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Q-Q plot for standardized Hours
+qqnorm(hrs_GAD_filtered_clean$hours_Stand, main = "Q-Q plot for Stand Hours")
+qqline(hrs_GAD_filtered_clean$hours_Stand)
+
+
+```
+
+
+```{r}
+# Histogram with KDE for standardized Hours
+ggplot(data = hrs_GAD_filtered_clean, aes(x = hours_Stand)) +
+  geom_histogram(aes(y = ..density..),  # Use density for y-axis
+                 binwidth = 1,
+                 color = "orange",
+                 fill = "purple",
+                 alpha = 0.7) +  # Opacity
+  geom_density(color = "blue",           # Color of the KDE curve
+               size = 1,                 # Thickness of the curve
+               adjust = 1) +             # Adjust bandwidth for fitting
+  labs(x = "Hours Standardized", 
+       y = "Density",                  # Change to Density for y-axis
+       title = "Hours Stand Distribution with KDE") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+```
+
+
+```{r plotting_age}
+
+# Histogram for standardized Age
+ggplot(data = gaming_data_clean, aes(x = age_Stand)) +
+  geom_histogram(binwidth = 1, color = "red", fill = "blue", alpha = .7) +
+  labs(x = "Age Standardized", y = "Frequency", title = "Age Stand Distribution") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Q-Q plot for standardized Age
+qqnorm(gaming_data_clean$age_Stand, main = "Q-Q plot for Stand Age")
+qqline(gaming_data_clean$age_Stand)
+
+
+```
+
+
+```{r}
+# Histogram with KDE for standardized Age
+ggplot(data = gaming_data_clean, aes(x = age_Stand)) +
+  geom_histogram(aes(y = ..density..),  # Use density for y-axis
+                 binwidth = 1,
+                 color = "orange",
+                 fill = "purple",
+                 alpha = 0.7) +  # Opacity
+  geom_density(color = "blue",           # Color of the KDE curve
+               size = 1,                 # Thickness of the curve
+               adjust = 1) +             # Adjust bandwidth for fitting
+  labs(x = "Age Standardized", 
+       y = "Density",                  # Change to Density for y-axis
+       title = "Age Stand Distribution with KDE") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+
+
+
+
+
+```
+
+# ANOVA test for hrs played and being narcissist
+
+Null: There is no difference in the mean hours played among the different levels of narcissism.
+Alternate: At least one group mean is different from the others. 
+```{r}
+
+
+# Combine the two datasets (assuming both have a common identifier or are appropriately merged)
+combined_data <- data.frame(Hours = hrs_GAD_filtered_clean$Hours,
+                             Narcissism = gaming_data$Narcissism_ord)
+
+# Conduct ANOVA
+anova_result <- aov(Hours ~ Narcissism, data = combined_data)
+
+# Summarize the ANOVA results
+summary(anova_result)
+
+```
+
+
+Since the p-value is less than 0.001 (indicated by the ***), we conclude that there are statistically significant differences in hours of gameplay among the different levels of narcissism - suggesting that the amount of time spent gaming is influenced by an individual’s level of narcissism.
+
+# post-hoc test
+
+```{r}
+
+# Perform the ANOVA
+anova_result <- aov(Hours ~ Narcissism, data = combined_data)
+
+# Summarize the ANOVA results
+summary(anova_result)
+
+# Conduct the post-hoc Tukey HSD test
+posthoc_result <- TukeyHSD(anova_result)
+
+# Print the post-hoc test results
+print(posthoc_result)
+
+# Optionally, visualize the results of the post-hoc test
+plot(posthoc_result)
+
+
+# Convert the Tukey HSD results to a data frame
+posthoc_df <- as.data.frame(posthoc_result$Narcissism)
+
+# Plot the results
+ggplot(posthoc_df, aes(y = reorder(rownames(posthoc_df), diff), x = diff)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.2) +
+  labs(y = "Narcissism Levels", x = "Mean Difference", title = "Post-Hoc Tukey HSD Results") +
+  theme_minimal()
+
+
+
+
+```
+
+# ANOVA test for hrs played and GAD
+
+Null Hypothesis: No significant difference in the mean hours played per week across the different levels of Generalized Anxiety Disorder (GAD).
+Alternate: There is at least one significant difference in the mean hours played per week across the different levels of Generalized Anxiety Disorder (GAD).
+
+```{r}
+
+anova_result <- aov(hrs_GAD_filtered_clean$Hours ~ gaming_data$GAD_ord)
+
+# Summary of the ANOVA test results
+summary(anova_result)
+
+```
+
+p-value is much less than the significance level of 0.05, means that there is at least one significant difference in the mean hours played per week across the different levels of Generalized Anxiety Disorder (GAD).
+
+# post-hoc test
+
+```{r}
+
+# Perform the ANOVA
+anova_result <- aov(hrs_GAD_filtered_clean$Hours ~ gaming_data$GAD_ord)
+
+# Summary of the ANOVA test results
+summary(anova_result)
+
+# Conduct the post-hoc Tukey HSD test
+posthoc_result <- TukeyHSD(anova_result)
+
+# Print the post-hoc test results
+print(posthoc_result)
+
+# Optionally, visualize the results of the post-hoc test
+plot(posthoc_result)
+
+# Convert the Tukey HSD results to a data frame for easier manipulation
+posthoc_df <- as.data.frame(posthoc_result$`gaming_data$GAD_ord`)
+
+# Plotting the post-hoc test results
+library(ggplot2)
+
+ggplot(posthoc_df, aes(y = reorder(rownames(posthoc_df), diff), x = diff)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.2) +
+  labs(y = "GAD Ordinal Levels", x = "Mean Difference", title = "Post-Hoc Tukey HSD Results for GAD Ordinal Levels") +
+  theme_minimal()
+
+
+
+```
