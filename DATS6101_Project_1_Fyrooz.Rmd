@@ -682,7 +682,7 @@ ggplot(gaming_data, aes(x = SPIN_ord, fill = cleaned_whyplay)) +
 
 
 # GAD_ordinal based on GADE
-```{r GAD_ord vs why_play}
+```{r GAD_ordinal based on GADE}
 
 ggplot(gaming_data, aes(x = GAD_ord, fill = GADE)) +
 geom_bar()
@@ -697,7 +697,7 @@ ggplot(gaming_data, aes(x = GAD_ord, fill = GADE)) +
 ```
 
 # Age (cleaned) distribution on GAD_ordinal based
-```{r GAD_ord vs why_play}
+```{r GAD_ord vs Age}
 ggplot(gaming_data, aes(x = gaming_data_clean$Age)) +
   geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
   facet_wrap(~ GAD_ord) +
@@ -709,7 +709,7 @@ ggplot(gaming_data, aes(x = gaming_data_clean$Age)) +
 
 ```
 # Hrs played distribution on GAD_ordinal based
-```{r GAD_ord vs why_play}
+```{r GAD_ord vs Hrs}
 ggplot(gaming_data, aes(x = hrs_GAD_filtered_clean$Hours)) +
   geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
   facet_wrap(~ GAD_ord) +
