@@ -270,7 +270,6 @@ fig <- ggplot(whyplay_counts, aes(x = WhyPlay, y = SurveyCount)) +
   geom_bar(stat = 'identity', fill = '#232A75') +
   labs(title = 'Reasons for Playing', 
        subtitle = '', 
-       caption = 'Data Source: Survey Data', 
        x = 'Reasons for Playing', 
        y = 'Total Respondents') +
   theme_minimal() +
@@ -635,6 +634,18 @@ adjusted_residuals <- residuals / sqrt(expected_counts)
 # Print adjusted residuals
 print(adjusted_residuals)
 
+<<<<<<< Updated upstream
+=======
+residuals_df <- melt(adjusted_residuals)
+
+# Create a heatmap
+ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "GAD and WhyPlay Adjusted Residuals Heatmap", x = "GAD Scale", y = "WhyPlay") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+>>>>>>> Stashed changes
 
 contingency_df <- as.data.frame(contingency_table)
 
@@ -678,6 +689,18 @@ adjusted_residuals <- residuals / sqrt(expected_counts)
 # Print adjusted residuals
 print(adjusted_residuals)
 
+<<<<<<< Updated upstream
+=======
+residuals_df <- melt(adjusted_residuals)
+
+# Create a heatmap
+ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "SPIN and WhyPlay Adjusted Residuals Heatmap", x = "SPIN Scale", y = "WhyPlay") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+>>>>>>> Stashed changes
 
 contingency_df <- as.data.frame(contingency_table)
 
@@ -722,6 +745,21 @@ adjusted_residuals <- residuals / sqrt(expected_counts)
 print(adjusted_residuals)
 
 
+<<<<<<< Updated upstream
+=======
+residuals_df <- melt(adjusted_residuals)
+
+# Create a heatmap
+ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "SWL and WhyPlay Adjusted Residuals Heatmap", x = "SWL SCale", y = "WhyPlay") +
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+>>>>>>> Stashed changes
 contingency_df <- as.data.frame(contingency_table)
 
 # Plot
