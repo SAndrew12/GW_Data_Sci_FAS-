@@ -1035,6 +1035,73 @@ ggplot(posthoc_df, aes(y = reorder(rownames(posthoc_df), diff), x = diff)) +
   labs(y = "GAD Ordinal Levels", x = "Mean Difference", title = "Post-Hoc Tukey HSD Results for GAD Ordinal Levels") +
   theme_minimal()
 
+```
 
+# Adding Hours and Streams, and creating histogram
+
+```{r}
+# Create the new column hrs_stream_combined in gaming_data
+gaming_data$hrs_stream_combined <- gaming_data_clean$streams + hrs_GAD_filtered_clean$Hours
+
+# Check the structure of the updated gaming_data
+str(gaming_data)
+
+# View the first few rows to verify the new column
+head(gaming_data)
+
+
+hist(gaming_data$hrs_stream_combined, main = "Histogram of total time Spent watching Steams, Tournaments, etc. (hrs/week)
+", xlab = "Total time Spent watching Steams, Tournaments, etc. (hrs/week)
+ ", col = "lightblue")
+boxplot(gaming_data_clean$streams, main = "Boxplot of total time Spent watching Steams, Tournaments, etc. (hrs/week)", xlab = "Total time Spent watching Steams, Tournaments, etc. (hrs/week)", col = "lightblue")
+```
+
+# Hrs, Streaming_combined distribution on GAD_ordinal based
+```{r}
+ggplot(gaming_data, aes(x = gaming_data$hrs_stream_combined)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
+  facet_wrap(~ GAD_ord) +
+  labs(title = "Histogram of Total time spent on game and streaming by GAD_ordinal",
+       x = "Hours played/week",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+
+# ANOVA test for Total time spend and GAD_T
+
+Null: There is no difference in the mean combined hours spent on gaming and streaming among the different levels of GAD.
+Alternate: At least one group mean of the combined hours spent on gaming and streaming is different from the others among the different levels of GAD.
+```{r}
+
+# Combine the hours played and streams into a new variable
+gaming_data$hrs_stream_combined <- gaming_data_clean$streams + hrs_GAD_filtered_clean$Hours
+
+# Perform the ANOVA test
+anova_result_combined <- aov(hrs_stream_combined ~ GAD_ord, data = gaming_data)
+
+# Summarize the ANOVA results
+summary(anova_result_combined)
+
+```
+
+p values small so we reject the null hypothesis. This indicates that there is a statistically significant difference in the mean combined hours spent on gaming and streaming among the different levels of GAD.
+
+#Post hoc test
+
+```{r}
+# Perform the ANOVA
+anova_result <- aov(hrs_stream_combined ~ GAD_ord, data = gaming_data)
+
+# Perform Tukey HSD post-hoc test
+tukey_result <- TukeyHSD(anova_result)
+
+# Display the Tukey HSD results
+print(tukey_result)
+
+# Optional: Plot the Tukey HSD results
+plot(tukey_result)
 
 ```
