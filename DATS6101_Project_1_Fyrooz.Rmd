@@ -119,9 +119,13 @@ summary(hrs_GAD_filtered)
 ```{r}
 ggplot(hrs_GAD_filtered, aes(x=Hours)) + 
   geom_boxplot() + 
-  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
-  labs(title="Outliers in Hours spent gaming per week", x="Hours spent (per week)", y = "")
-
+  geom_boxplot(colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Outliers in Hours spent gaming per week", x="Hours spent (per week)", y = "") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),  # Center and bold title
+    axis.title.x = element_text(hjust = 0.5, face = "bold"), # Bold and center x-axis label
+    axis.title.y = element_text(hjust = 0.5, face = "bold")  # Bold and center y-axis label
+  )
 ```
 
 # Removing outliers in Hours and creating new dataset
@@ -195,6 +199,16 @@ summary(hrs_GAD_filtered_clean)
 ```{r}
 hist(hrs_GAD_filtered_clean$Hours, main = "Histogram of Hours Spent Gaming", xlab = "Hours spent (per week)", col = "lightblue")
 boxplot(hrs_GAD_filtered_clean$Hours, main = "Boxplot of Hours Spent Gaming", xlab = "Hours spent (per week)", col = "lightblue")
+
+ggplot(hrs_GAD_filtered_clean, aes(x=hrs_GAD_filtered_clean$Hours)) + 
+  geom_boxplot() + 
+  geom_boxplot(colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Hours spent gaming per week (Outliers excluded)", x="Hours spent (per week)", y = "") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),  # Center and bold title
+    axis.title.x = element_text(hjust = 0.5, face = "bold"), # Bold and center x-axis label
+    axis.title.y = element_text(hjust = 0.5, face = "bold")  # Bold and center y-axis label
+  )
 ```
 
 # Finding outliers in Age
@@ -283,8 +297,14 @@ boxplot(gaming_data_clean$Age, main = "Boxplot of Age (cleaned data)", xlab = "A
 ```{r}
 ggplot(gaming_data, aes(x=streams)) + 
   geom_boxplot() + 
-  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
-  labs(title="Outliers in streams", x="streams", y = "")
+  geom_boxplot(colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Outliers in streaming per week", x="Streaming (per week)", y = "") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),  # Center and bold title
+    axis.title.x = element_text(hjust = 0.5, face = "bold"), # Bold and center x-axis label
+    axis.title.y = element_text(hjust = 0.5, face = "bold")  # Bold and center y-axis label
+  )
+
 
 ```
 
@@ -359,6 +379,17 @@ hist(gaming_data_clean$streams, main = "Histogram of Time Spent watching Steams,
 ", xlab = "Time Spent watching Steams, Tournaments, etc. (hrs/week)
  ", col = "lightblue")
 boxplot(gaming_data_clean$streams, main = "Boxplot of Time Spent watching Steams, Tournaments, etc. (hrs/week)", xlab = "Time Spent watching Steams, Tournaments, etc. (hrs/week)", col = "lightblue")
+
+ggplot(gaming_data_clean, aes(x=gaming_data_clean$streams)) + 
+  geom_boxplot() + 
+  geom_boxplot(colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Streaming per week (Outliers excluded )", x="Streaming (per week)", y = "") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),  # Center and bold title
+    axis.title.x = element_text(hjust = 0.5, face = "bold"), # Bold and center x-axis label
+    axis.title.y = element_text(hjust = 0.5, face = "bold")  # Bold and center y-axis label
+  )
+
 ```
 
 # Cleaning the Playstyle Data and Whyplay
@@ -560,8 +591,8 @@ filtered_data <- gaming_data %>%
 # Create the bar chart with the filtered data
 ggplot(filtered_data, aes(x = Residence, fill = Work)) +
   geom_bar() +
-  labs(title = "Bar chart depicting Countries where most games 
-  are played from based on employment status",
+  labs(title = "Bar chart depicting residences where most games 
+  are played from and players's employment status",
        x = "Residence",
        y = "Count") +
   theme_minimal()
@@ -656,14 +687,49 @@ gaming_data$SPIN_ord <- factor(gaming_data$SPIN_ord,
 ggplot(gaming_data, aes(x = GAD_ord, fill = cleaned_whyplay)) +
 geom_bar()
 
-
 ggplot(gaming_data, aes(x = GAD_ord, fill = cleaned_whyplay)) +
   geom_bar(position = "fill") +  # Use position = "fill" to show proportions
-  ylab("Proportion") +            # Label the y-axis
-  labs(title = "Proportion of cleaned_whyplay by GAD_ord") +  # Add a title
-  theme_minimal()      
+  ylab("Proportion") +           # Label the y-axis
+  xlab("severity of the Generalized Anxiety Disorder") +           # Label the x-axis
+  labs(title = "Proportion of Reasons for Playing by GAD Scores",
+       fill = "Reasons for Playing") +  # Rename the legend title
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),  # Center and bold the title
+    axis.title.x = element_text(face = "bold", size = 12),  # Bold and size for x-axis label
+    axis.title.y = element_text(face = "bold", size = 12),  # Bold and size for y-axis label
+    axis.text.x = element_text(face = "bold", size = 10),   # Bold the x-axis tick labels
+    axis.text.y = element_text(face = "bold", size = 10),   # Bold the y-axis tick labels
+    legend.title = element_text(face = "bold"),             # Bold the legend title
+    legend.text = element_text(face = "bold")               # Bold the legend labels
+  )
+
 
 ```
+# GADE_ordinal based on why they play
+
+```{r}
+ggplot(gaming_data, aes(x = GADE, fill = cleaned_whyplay)) +
+  geom_bar(position = "fill") +  # Use position = "fill" to show proportions
+  ylab("Proportion") +           # Label the y-axis
+  xlab("Generalized Anxiety Disorder Effect in Life") +           # Label the x-axis
+  labs(title = "Proportion of Reasons for Playing by GADE Scores",
+       fill = "Reasons for Playing") +  # Rename the legend title
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),  # Center and bold the title
+    axis.title.x = element_text(face = "bold", size = 12),  # Bold and size for x-axis label
+    axis.title.y = element_text(face = "bold", size = 12),  # Bold and size for y-axis label
+    axis.text.x = element_text(face = "bold", size = 10, angle = 45, hjust = 1),   # Rotate and bold the x-axis tick labels
+    axis.text.y = element_text(face = "bold", size = 10),   # Bold the y-axis tick labels
+    legend.title = element_text(face = "bold"),             # Bold the legend title
+    legend.text = element_text(face = "bold")               # Bold the legend labels
+  )
+
+
+```
+
+
 
 # SPIN_ord_ordinal based on why they play
 ```{r SPIN_ord vs why_play}
@@ -674,15 +740,27 @@ geom_bar()
 
 ggplot(gaming_data, aes(x = SPIN_ord, fill = cleaned_whyplay)) +
   geom_bar(position = "fill") +  # Use position = "fill" to show proportions
-  ylab("Proportion") +            # Label the y-axis
-  labs(title = "Proportion of cleaned_whyplay by SPIN_ord") +  # Add a title
-  theme_minimal()      
+  ylab("Proportion") +           # Label the y-axis
+  xlab("Total score on the Social Phobia Inventory") +          # Label the x-axis
+  labs(title = "Proportion of Reasons for Playing by SPIN Scores",
+       fill = "Reasons for Playing") +  # Rename the legend title
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),  # Center and bold the title
+    axis.title.x = element_text(face = "bold", size = 12),  # Bold and size for x-axis label
+    axis.title.y = element_text(face = "bold", size = 12),  # Bold and size for y-axis label
+    axis.text.x = element_text(face = "bold", size = 10),   # Bold the x-axis tick labels
+    axis.text.y = element_text(face = "bold", size = 10),   # Bold the y-axis tick labels
+    legend.title = element_text(face = "bold"),             # Bold the legend title
+    legend.text = element_text(face = "bold")               # Bold the legend labels
+  )
+  
 
 ```
 
 
 # GAD_ordinal based on GADE
-```{r GAD_ord vs why_play}
+```{r GAD_ordinal based on GADE}
 
 ggplot(gaming_data, aes(x = GAD_ord, fill = GADE)) +
 geom_bar()
@@ -697,7 +775,7 @@ ggplot(gaming_data, aes(x = GAD_ord, fill = GADE)) +
 ```
 
 # Age (cleaned) distribution on GAD_ordinal based
-```{r GAD_ord vs why_play}
+```{r GAD_ord vs Age}
 ggplot(gaming_data, aes(x = gaming_data_clean$Age)) +
   geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
   facet_wrap(~ GAD_ord) +
@@ -709,7 +787,7 @@ ggplot(gaming_data, aes(x = gaming_data_clean$Age)) +
 
 ```
 # Hrs played distribution on GAD_ordinal based
-```{r GAD_ord vs why_play}
+```{r GAD_ord vs Hrs}
 ggplot(gaming_data, aes(x = hrs_GAD_filtered_clean$Hours)) +
   geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
   facet_wrap(~ GAD_ord) +
@@ -939,8 +1017,8 @@ Alternate: At least one group mean is different from the others.
 
 
 # Combine the two datasets (assuming both have a common identifier or are appropriately merged)
-combined_data <- data.frame(Hours = hrs_GAD_filtered_clean$Hours,
-                             Narcissism = gaming_data$Narcissism_ord)
+combined_data <- data.frame(Narcissism = gaming_data$Narcissism_ord,
+                            Hours = hrs_GAD_filtered_clean$Hours)
 
 # Conduct ANOVA
 anova_result <- aov(Hours ~ Narcissism, data = combined_data)
@@ -1035,6 +1113,136 @@ ggplot(posthoc_df, aes(y = reorder(rownames(posthoc_df), diff), x = diff)) +
   labs(y = "GAD Ordinal Levels", x = "Mean Difference", title = "Post-Hoc Tukey HSD Results for GAD Ordinal Levels") +
   theme_minimal()
 
+```
+
+# Adding Hours and Streams, and creating histogram
+
+```{r}
+# Create the new column hrs_stream_combined in gaming_data
+gaming_data$hrs_stream_combined <- gaming_data_clean$streams + hrs_GAD_filtered_clean$Hours
+
+# Check the structure of the updated gaming_data
+str(gaming_data)
+
+# View the first few rows to verify the new column
+head(gaming_data)
+
+
+hist(gaming_data$hrs_stream_combined, 
+     main = "", # Set an empty main to customize it later
+     xlab = "", # Set an empty xlab to customize it later
+     ylab = "", # Set an empty ylab to customize it later
+     col = "lightblue")
+
+# Customize the title and labels
+title(main = "Histogram: Total time Spent watching Streams, Tournaments, etc.",
+      xlab = "Time Spent (hrs/week)",
+      ylab = "Frequency",        # Add the y-axis label
+      font.main = 2,  # Bold title
+      font.lab = 2,   # Bold x and y labels
+      cex.main = 1.2, # Adjust title size
+      cex.lab = 1.2   # Adjust label size for both axes
+)
 
 
 ```
+
+# Hrs, Streaming_combined distribution on GAD_ordinal based
+```{r}
+ggplot(gaming_data, aes(x = gaming_data$hrs_stream_combined)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
+  facet_wrap(~ GAD_ord) +
+  labs(title = "Histogram of Total time spent on game and streaming by GAD_ordinal",
+       x = "Hours played/week",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+
+# ANOVA test for Total time spend and GAD_T
+
+Null: There is no difference in the mean combined hours spent on gaming and streaming among the different levels of GAD.
+Alternate: At least one group mean of the combined hours spent on gaming and streaming is different from the others among the different levels of GAD.
+```{r}
+
+# Combine the hours played and streams into a new variable
+gaming_data$hrs_stream_combined <- gaming_data_clean$streams + hrs_GAD_filtered_clean$Hours
+
+# Perform the ANOVA test
+anova_result_combined <- aov(hrs_stream_combined ~ GAD_ord, data = gaming_data)
+
+# Summarize the ANOVA results
+summary(anova_result_combined)
+
+```
+
+p values small so we reject the null hypothesis. This indicates that there is a statistically significant difference in the mean combined hours spent on gaming and streaming among the different levels of GAD.
+
+#Post hoc test
+
+```{r}
+# Perform the ANOVA
+anova_result <- aov(hrs_stream_combined ~ GAD_ord, data = gaming_data)
+
+# Perform Tukey HSD post-hoc test
+tukey_result <- TukeyHSD(anova_result)
+
+# Display the Tukey HSD results
+print(tukey_result)
+
+# Optional: Plot the Tukey HSD results
+plot(tukey_result)
+
+```
+
+
+# ANOVA test for Total time spent and SPIN_inventory
+
+Null: There is no difference in the mean combined hours spent on gaming and streaming among the different levels of GAD.
+Alternate: At least one group mean of the combined hours spent on gaming and streaming is different from the others among the different levels of GAD.
+```{r}
+
+# Combine the hours played and streams into a new variable
+gaming_data$hrs_stream_combined <- gaming_data_clean$streams + hrs_GAD_filtered_clean$Hours
+
+# Perform the ANOVA test
+anova_result_combined <- aov(hrs_stream_combined ~ SPIN_ord, data = gaming_data)
+
+# Summarize the ANOVA results
+summary(anova_result_combined)
+
+```
+
+Since the p-value is less than 0.05, we reject the null hypothesis. This suggests that there are significant differences in the mean combined hours spent on playing games and streaming (hrs_stream_combined) across the different levels of the Social Phobia Inventory (SPIN_ord).
+
+#Post hoc test
+
+```{r}
+# Combine the hours played and streams into a new variable
+gaming_data$hrs_stream_combined <- gaming_data_clean$streams + hrs_GAD_filtered_clean$Hours
+
+# Perform the ANOVA test
+anova_result_combined <- aov(hrs_stream_combined ~ SPIN_ord, data = gaming_data)
+
+# Summarize the ANOVA results
+summary(anova_result_combined)
+
+# Perform Tukey HSD post-hoc test
+tukey_result_spin <- TukeyHSD(anova_result_combined)
+
+# Display the Tukey HSD results
+print(tukey_result_spin)
+
+# Optional: Plot the Tukey HSD results
+plot(tukey_result_spin)
+
+```
+### g - Hours and Streams (Pearson's Correlation)
+```{r, corr_h_s}
+cor_test <- cor.test(hrs_GAD_filtered_clean$Hours, gaming_data_clean$streams)
+correlation_result_Hours_Streams <- cor(hrs_GAD_filtered_clean$Hours, gaming_data_clean$streams, method = "pearson", use = "complete.obs")
+cor_test
+```
+
