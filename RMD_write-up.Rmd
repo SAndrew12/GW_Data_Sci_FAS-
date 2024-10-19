@@ -1,6 +1,6 @@
 ---
-title: "Exploratory Data Analysis (EDA)"
-author: "GWU Intro to Data Science -- DATS 6101"
+title: "Mental Health Outcomes in Gamers"
+author: "Team 5 -- DATS 6101"
 # date: "today"
 date: "`r Sys.Date()`"
 output:
@@ -32,54 +32,317 @@ knitr::opts_chunk$set(warning = F, results = "markup", message = F)
 options(scientific=T, digits = 3) 
 ```
 
-## Iventory information
-
-General Anxiety Disorder-7 (GAD): <br>
-- measures severity of anxiety <br>
-0 - 4 : minimal anxiety <br>
-5 - 9 : mild anxiety <br>
-10 - 14 : moderate anxiety <br>
-15 - 21 : severe anxiety <br>
-
-Satisfaction With Life SWL-7 (SWL)<br>
-- measures and individual's perceived satisfaction with life<br>
-31 - 35 : extremely satisfied <br>
-26 - 30 : satisfied <br>
-21 -25 : slightly satisfied <br>
-20 : neutral <br>
-15 - 19 : slightly dissatisfied <br>
-10 - 14 : dissatisfied <br>
-5 - 9 : extremely dissatisfied <br>
-
-Social Phobia Inventory (SPIN)<br>
-- Used to identify or monitor social anxiety disorder (social phobia)<br>
-0 - 20 : none<br>
-21 - 30 : mild<br>
-31 - 40 : moderate<br>
-41 - 50 : severe<br>
-51 - 68 : very severe <br>
-
-Generalized Anxiety disorder, Effect in Life (GADE) <br>
-- If respondent checked off any problems during GAD-7 "how difficult have these problems made your..."<br>
- 
- 
-Narcissism <br>
-- to what extent do you agree with with this statement, "I am a narcissist" <br>
-
 ```{r read-in, include=TRUE}
 df <- read_csv("GamingStudy_data.csv")
-glimpse(df)
+```
+
+## Introduction
+
+### Reasearch Question
+
+ffnvjnvfijvnerijnvrejivnerijvnerijvnervijnerv
+jnevirenviernvirenviernviernveriunveriuvneruivnrev
+rejivnpreinvervnervnervneprovnerpouvn
+
+### The Data
+
+ijsvisdjnvijsdnvijsdnvskmosdmvosmdos
+
+### Mental Health Inventories and Predictors 
+
+GAD-7, SPIN, SWL...
+
+Hours, Streams.....
+
+
+## Exploratory Data Analysis 
+
+### Respondent Demographics 
+
+``` {r, countryplot}
+Residence_counts <- as.data.frame(table(df$Residence))
+colnames(Residence_counts) <- c("Residence", "SurveyCount")
+Residence_counts <- Residence_counts[order(-Residence_counts$SurveyCount), ]
+
+# Keep only the top 10 residences
+top_10_residences <- head(Residence_counts, 20)
+
+# Create the plot
+fig <- ggplot(top_10_residences, aes(x = reorder(Residence, -SurveyCount), y = SurveyCount)) +
+  geom_bar(stat = 'identity', fill = '#232A75') +
+  geom_text(aes(label = SurveyCount), vjust = -0.5, color = 'white') +
+  labs(title = 'Top 20 Residence Distribution', 
+       x = '', 
+       y = 'Total Surveyors') +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Print the figure
+print(fig)
+```
+
+words about plot
+
+``` {r, gameplot}
+game_counts <- as.data.frame(table(df$Game))
+colnames(game_counts) <- c("Game", "SurveyCount")
+game_counts <- game_counts[order(-game_counts$SurveyCount), ]
+
+# Create the plot
+fig <- ggplot(game_counts, aes(x = reorder(Game, -SurveyCount), y = SurveyCount)) +
+  geom_bar(stat = 'identity', fill = '#232A75') +
+  labs(title = 'Game Distribution', 
+       subtitle = '', 
+       x = '', 
+       y = 'Total Surveyors') +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_minimal()  +
+ theme(plot.title = element_text(hjust = 0.5))
+# Print the figure
+print(fig)
 ```
 
 
-```{r, results='asis'}
-# # Changing variable names (HW #3)
-# colnames(mlb)[4:6]=c("height","weight","age")
-# # The line above produces no output. To see the changes, use str() or head()
-# xkabledplyhead(mlb, title = "Header rows for mlb dataset")
+``` {r, genderplot}
+gender_counts <- as.data.frame(table(df$Gender))
+colnames(gender_counts) <- c("Gender", "SurveyCount")
+gender_counts <- gender_counts[order(-gender_counts$SurveyCount), ]
+
+# Create the plot
+fig <- ggplot(gender_counts, aes(x = reorder(Gender, -SurveyCount), y = SurveyCount)) +
+  geom_bar(stat = 'identity', fill = '#232A75') +
+  labs(title = 'Gender Distribution', 
+       subtitle = '', 
+       x = '', 
+       y = 'Total Respondents') +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_minimal()  +
+ theme(plot.title = element_text(hjust = 0.5))
+
+# Print the figure
+print(fig)
 ```
 
-## Make raw scores ordinal
+words.....
+
+
+``` {r, age}
+age_counts <- as.data.frame(table(df$Age))
+colnames(age_counts) <- c("Age", "SurveyCount")
+age_counts <- age_counts[order(-age_counts$SurveyCount), ]
+
+# Create the plot
+fig <- ggplot(age_counts, aes(x = reorder(Age, -SurveyCount), y = SurveyCount)) +
+  geom_bar(stat = 'identity', fill = '#232A75') +
+  labs(title = 'Age Distribution', 
+       subtitle = '', 
+       x = 'Age', 
+       y = 'Total Respondents') +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_minimal()  +
+ theme(plot.title = element_text(hjust = 0.5))
+
+# Print the figure
+print(fig)
+
+```
+
+words....
+
+### Distribution of Inventories 
+
+GAD 
+
+```{r, gaddist}
+ggplot(data = df, aes(x = GAD_T)) +
+  geom_histogram(binwidth = 1,
+                 color = "red",
+                 fill = "blue",
+                 alpha = .7) + # opacity
+  labs(x = "GAD Total Score", y = "Frequency", title = "GAD Distribution") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+words....
+
+
+SWL 
+
+```{r, swldist}
+ggplot(data = df, aes(x = SWL_T)) +
+  geom_histogram(binwidth = 1,
+                 color = "pink",
+                 fill = "green",
+                 alpha = .7) + # opacity
+  labs(x = "SWL Total Score", y = "Frequency", title = "SWL Distribution") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+SPIN 
+
+```{r, spindist}
+ggplot(data = df, aes(x = SPIN_T)) +
+  geom_histogram(binwidth = 1,
+                 color = "orange",
+                 fill = "purple",
+                 alpha = .7) + # opacity
+  labs(x = "SPIN Total Score", y = "Frequency", title = "SPIN Distribution") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+words....
+
+Maybe there is a way to make all three plots side-by-side??
+
+
+### Below is all the code for LOG and SCALE() Transforms...Anith, up to you if we show any of this
+
+#### Applying log transform to GAD and SPIN to make them more normal
+
+```{r, logtransgad}
+# Log-transform the GAD_T column (adding 1 to avoid log(0))
+df$log_GAD_T <- log(df$GAD_T + 1)
+
+# Create the histogram with a KDE curve
+ggplot(data = df, aes(x = log_GAD_T)) +
+  geom_histogram(aes(y = ..density..),  # Use density for y-axis
+                 binwidth = 0.5,
+                 color = "red",
+                 fill = "blue",
+                 alpha = 0.7) +  # Opacity
+  geom_density(color = "green",           # Color of the KDE curve
+               size = 1,                  # Thickness of the curve
+               adjust = 1) +              # Adjust bandwidth for fitting
+  labs(x = "GAD Log Total Score", 
+       y = "Density",                   # Change to Density for y-axis
+       title = "GAD Log Distribution with KDE") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+qqnorm(df$log_GAD_T, main="Q-Q plot for Log GAD") 
+qqline(df$log_GAD_T)
+```
+
+
+
+```{r, logtransswl}
+# Log-transform the SPIN_T column (adding 1 to avoid log(0))
+df$log_SPIN_T <- log(df$SPIN_T + 1)
+
+# Create the histogram with a KDE curve
+ggplot(data = df, aes(x = log_SPIN_T)) +
+  geom_histogram(aes(y = ..density..),  # Use density for y-axis
+                 binwidth = 1,
+                 color = "orange",
+                 fill = "purple",
+                 alpha = 0.7) +  # Opacity
+  geom_density(color = "blue",           # Color of the KDE curve
+               size = 1,                 # Thickness of the curve
+               adjust = 1) +             # Adjust bandwidth for fitting
+  labs(x = "SPIN Log Total Score", 
+       y = "Density",                  # Change to Density for y-axis
+       title = "SPIN Log Distribution with KDE") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+qqnorm(df$log_SPIN_T, main="Q-Q plot for Log SPIN") 
+qqline(df$log_SPIN_T)
+
+
+```
+
+```{r}
+# boxplot(mlb$height, main="Boxplot of Baseball Player Height", ylab="Height (inches)", col = 'red' )
+# ggplot(mlb, aes(y=height)) + 
+#   geom_boxplot() + 
+#   geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+#   labs(title="Boxplot of Baseball Player Height using `ggplot`", x="", y = "Height (inches)")
+```
+
+Now the Q-Q plot, adding a theoretical line to the plot.
+
+```{r}
+# qqnorm(mlb$height, main="Q-Q plot of Baseball Player Heights") 
+# qqline(mlb$height)
+# shapiro.test(mlb$height) # Shapiro-Wilk test for normality
+# ks.test(mlb$height,pnorm) # Kolmogorov-Smirnov Tests against normal distribution
+```
+
+
+#### Standardizing 
+
+
+``` {r, standardizing}
+df$GAD_T_Stand <- scale(df$GAD_T)
+df$SWL_T_Stand <- scale(df$SWL_T)
+df$SPIN_T_Stand <- scale(df$SPIN_T)
+```
+
+``` {r, plotting_newGAD}
+ggplot(data = df, aes(x = GAD_T_Stand)) +
+  geom_histogram(binwidth = 1,
+                 color = "red",
+                 fill = "blue",
+                 alpha = .7) + # opacity
+  labs(x = "GAD Standardized", y = "Frequency", title = "GAD Stand Distribution") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+qqnorm(df$GAD_T_Stand, main="Q-Q plot for Stand GAD") 
+qqline(df$GAD_T_Stand)
+```
+
+``` {r, plotting_newSWL}
+# Create the histogram with a KDE curve
+ggplot(data = df, aes(x = SWL_T_Stand)) +
+  geom_histogram(aes(y = ..density..),  # Use density for y-axis
+                 binwidth = 1,
+                 color = "orange",
+                 fill = "purple",
+                 alpha = 0.7) +  # Opacity
+  geom_density(color = "blue",           # Color of the KDE curve
+               size = 1,                 # Thickness of the curve
+               adjust = 1) +             # Adjust bandwidth for fitting
+  labs(x = "GAD Stand Log Total Score", 
+       y = "Density",                  # Change to Density for y-axis
+       title = "GAD Stand Distribution with KDE") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+qqnorm(df$SWL_T_Stand, main="Q-Q plot for Stand SWL") 
+qqline(df$SWL_T_Stand)
+```
+
+``` {r, plotting_newSPIN}
+# Create the histogram with a KDE curve
+ggplot(data = df, aes(x = SPIN_T_Stand)) +
+  geom_histogram(aes(y = ..density..),  # Use density for y-axis
+                 binwidth = 1,
+                 color = "orange",
+                 fill = "purple",
+                 alpha = 0.7) +  # Opacity
+  geom_density(color = "blue",           # Color of the KDE curve
+               size = 1,                 # Thickness of the curve
+               adjust = 1) +             # Adjust bandwidth for fitting
+  labs(x = "GAD Stand Log Total Score", 
+       y = "Density",                  # Change to Density for y-axis
+       title = "GAD Stand Distribution with KDE") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+qqnorm(df$SPIN_T_Stand, main="Q-Q plot for Stand SPIN") 
+qqline(df$SPIN_T_Stand)
+
+mean_spin = mean(df$SPIN_T_Stand, na.rm = TRUE)
+mean_spin
+```
+
+### Converstion to Ordinal (thinking that maybe a screenshot of how we present the info the slides would make it clear for a non-technical audience?)
+
 ``` {r, ord}
 # Function to convert GAD_T to ordinal variable
 convert_GAD <- function(score) {
@@ -159,80 +422,12 @@ df$SPIN_ord <- factor(df$SPIN_ord,
 
 
 # Print the updated data frame
-print(df$GAD_ord)
+#print(df$GAD_ord)
 
 ```
 
-## Plot Vars
-Game Played (cat)
 
-``` {r, gameplot}
-game_counts <- as.data.frame(table(df$Game))
-colnames(game_counts) <- c("Game", "SurveyCount")
-game_counts <- game_counts[order(-game_counts$SurveyCount), ]
-
-# Create the plot
-fig <- ggplot(game_counts, aes(x = reorder(Game, -SurveyCount), y = SurveyCount)) +
-  geom_bar(stat = 'identity', fill = '#232A75') +
-  labs(title = 'Game Distribution', 
-       subtitle = '', 
-       x = '', 
-       y = 'Total Surveyors') +
-  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
-  theme_minimal()  +
- theme(plot.title = element_text(hjust = 0.5))
-# Print the figure
-print(fig)
-```
-
-
-country (cat)
-``` {r, countryplot}
-Residence_counts <- as.data.frame(table(df$Residence))
-colnames(Residence_counts) <- c("Residence", "SurveyCount")
-Residence_counts <- Residence_counts[order(-Residence_counts$SurveyCount), ]
-
-# Keep only the top 10 residences
-top_10_residences <- head(Residence_counts, 20)
-
-# Create the plot
-fig <- ggplot(top_10_residences, aes(x = reorder(Residence, -SurveyCount), y = SurveyCount)) +
-  geom_bar(stat = 'identity', fill = '#232A75') +
-  geom_text(aes(label = SurveyCount), vjust = -0.5, color = 'white') +
-  labs(title = 'Top 20 Residence Distribution', 
-       x = '', 
-       y = 'Total Surveyors') +
-  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-
-# Print the figure
-print(fig)
-```
-
-Gender (cat)
-
-``` {r, genderplot}
-gender_counts <- as.data.frame(table(df$Gender))
-colnames(gender_counts) <- c("Gender", "SurveyCount")
-gender_counts <- gender_counts[order(-gender_counts$SurveyCount), ]
-
-# Create the plot
-fig <- ggplot(gender_counts, aes(x = reorder(Gender, -SurveyCount), y = SurveyCount)) +
-  geom_bar(stat = 'identity', fill = '#232A75') +
-  labs(title = 'Gender Distribution', 
-       subtitle = '', 
-       x = '', 
-       y = 'Total Respondents') +
-  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
-  theme_minimal()  +
- theme(plot.title = element_text(hjust = 0.5))
-
-# Print the figure
-print(fig)
-```
-
-whyplay
+### cleaning whyplay (thinking that maybe a screenshot of how we present the info the slides would make it clear for a non-technical audience?)
 
 ``` {r, cleaningwhyplay}
 clean_responses <- function(response) {
@@ -253,7 +448,7 @@ clean_responses <- function(response) {
     return("all of the above")
   }
   
-  if (str_detect(response, "distraction|escaping|escape|forget|hide|hiding|depression|boredom|bored|time|forgetting|distracting|doing something|getting away from real life|trying to get my mind off")) {
+  if (str_detect(response, "distraction|escaping|escape|forget|hide|hiding|depression|boredom|bored|time|forgetting|making my brain go numb|distracting|doing something|getting away from real life|trying to get my mind off")) {
     return("escape")
   }
 
@@ -265,7 +460,7 @@ clean_responses <- function(response) {
     return("winning")
   }
   
-  if (str_detect(response, "social|socializing|friends|team|cooperating|i don't know anymore|occupied|making my brain go numb|the people i play with, the game is less important")) {
+  if (str_detect(response, "social|socializing|friends|team|cooperating|people|the people i play with, the game is less important")) {
     return("social")
   }
   
@@ -325,487 +520,62 @@ fig <- ggplot(whyplay_counts, aes(x = WhyPlay, y = SurveyCount)) +
 print(fig)
 ```
 
-Age (num)
+### Removing Outliers in Hours and Streams
 
-``` {r, age}
-age_counts <- as.data.frame(table(df$Age))
-colnames(age_counts) <- c("Age", "SurveyCount")
-age_counts <- age_counts[order(-age_counts$SurveyCount), ]
+kvfvdfvdfv
 
-# Create the plot
-fig <- ggplot(age_counts, aes(x = reorder(Age, -SurveyCount), y = SurveyCount)) +
-  geom_bar(stat = 'identity', fill = '#232A75') +
-  labs(title = 'Age Distribution', 
-       subtitle = '', 
-       x = 'Age', 
-       y = 'Total Respondents') +
-  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
-  theme_minimal()  +
- theme(plot.title = element_text(hjust = 0.5))
+Hours and streams combitnation to Total Hours
 
-# Print the figure
-print(fig)
+Correlation?
 
-```
+### Hours Converstion of Ordinal
 
-
-Hours (num)
-
-``` {r, hours}
-
-hour_counts <- as.data.frame(table(df$Hours))
-colnames(hour_counts) <- c("Hours", "SurveyCount")
-hour_counts <- hour_counts[order(-hour_counts$SurveyCount), ]
-
-# Create the plot
-fig <- ggplot(hour_counts, aes(x = reorder(Hours, -SurveyCount), y = SurveyCount)) +
-  geom_bar(stat = 'identity', fill = '#232A75') +
-  labs(title = 'Hours Distribution', 
-       subtitle = '', 
-       x = 'Hours', 
-       y = 'Total Respondents') +
-  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
-  theme_minimal()   +
- theme(plot.title = element_text(hjust = 0.5))
-# Print the figure
-print(fig)
-```
-
-
-streams (num)
-
-``` {r, streams}
-stream_counts <- as.data.frame(table(df$streams))
-colnames(stream_counts) <- c("Streams", "SurveyCount")
-
-# Sort the data
-stream_counts <- stream_counts[order(-stream_counts$SurveyCount), ]
-
-# Convert Streams to a factor with levels based on sorted order
-stream_counts$Streams <- factor(stream_counts$Streams, levels = stream_counts$Streams)
-
-# Create the plot
-fig <- ggplot(stream_counts, aes(x = Streams, y = SurveyCount)) +
-  geom_bar(stat = 'identity', fill = '#232A75') +
-  labs(title = 'Streams Distribution', 
-       subtitle = '', 
-       caption = 'Data Source: Survey Data', 
-       x = 'Streams', 
-       y = 'Total Respondents') +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-
-# Print the figure
-print(fig)
-```
-
-## Outliers adn qq
-
-```{r, outlier_gad}
-ggplot(df, aes(y=GAD_T)) + 
-  geom_boxplot() + 
-  geom_boxplot( colour="red", fill="gray", outlier.colour="black", outlier.shape=8, outlier.size=4) +
-  labs(title="Boxplot GAD", x="", y = "Score")
-
-qqnorm(df$GAD_T, main="Q-Q plot for GAD") 
-qqline(df$GAD_T)
-```
-
-```{r, outlier_swl}
-ggplot(df, aes(y=SWL_T)) + 
-  geom_boxplot() + 
-  geom_boxplot( colour="orange", fill="gray", outlier.colour="black", outlier.shape=8, outlier.size=4) +
-  labs(title="Boxplot SWL", x="", y = "Score")
-
-qqnorm(df$SWL_T, main="Q-Q plot for SWL") 
-qqline(df$SWL_T)
-```
-
-```{r, outlier_spin}
-ggplot(df, aes(y=SPIN_T)) + 
-  geom_boxplot() + 
-  geom_boxplot( colour="purple", fill="gray", outlier.colour="black", outlier.shape=8, outlier.size=4) +
-  labs(title="Boxplot SPIN", x="", y = "Score")
-
-qqnorm(df$SPIN_T, main="Q-Q plot for SPIN") 
-qqline(df$SPIN_T)
-```
-
-
-## EDA Plots
-
-
-```{r, gaddist}
-ggplot(data = df, aes(x = GAD_T)) +
-  geom_histogram(binwidth = 1,
-                 color = "red",
-                 fill = "blue",
-                 alpha = .7) + # opacity
-  labs(x = "GAD Total Score", y = "Frequency", title = "GAD Distribution") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-```
-
-```{r, gaddistt}
-ggplot(data = df, aes(x = GAD_T)) +
-  geom_histogram(aes(y = ..density..),  # Use density for y-axis
-                 binwidth = 1,
-                 color = "red",
-                 fill = "blue",
-                 alpha = 0.7) +  # Opacity
-  geom_density(color = "green",          # Color of the KDE curve
-               size = 1,                 # Thickness of the curve
-               adjust = 1) +             # Adjust bandwidth for fitting
-  labs(x = "GAD Total Score", 
-       y = "Density",                 # Change to Density for y-axis
-       title = "GAD Distribution with KDE") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-
-```
-
-```{r, swldist}
-ggplot(data = df, aes(x = SWL_T)) +
-  geom_histogram(binwidth = 1,
-                 color = "pink",
-                 fill = "green",
-                 alpha = .7) + # opacity
-  labs(x = "SWL Total Score", y = "Frequency", title = "SWL Distribution") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-```
-
-```{r, spindist}
-ggplot(data = df, aes(x = SPIN_T)) +
-  geom_histogram(binwidth = 1,
-                 color = "orange",
-                 fill = "purple",
-                 alpha = .7) + # opacity
-  labs(x = "SPIN Total Score", y = "Frequency", title = "SPIN Distribution") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-```
-
-#### Applying log transform to GAD and SPIN to make them more normal
-
-```{r, logtransgad}
-# Log-transform the GAD_T column (adding 1 to avoid log(0))
-df$log_GAD_T <- log(df$GAD_T + 1)
-
-# Create the histogram with a KDE curve
-ggplot(data = df, aes(x = log_GAD_T)) +
-  geom_histogram(aes(y = ..density..),  # Use density for y-axis
-                 binwidth = 0.5,
-                 color = "red",
-                 fill = "blue",
-                 alpha = 0.7) +  # Opacity
-  geom_density(color = "green",           # Color of the KDE curve
-               size = 1,                  # Thickness of the curve
-               adjust = 1) +              # Adjust bandwidth for fitting
-  labs(x = "GAD Log Total Score", 
-       y = "Density",                   # Change to Density for y-axis
-       title = "GAD Log Distribution with KDE") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-
-qqnorm(df$log_GAD_T, main="Q-Q plot for Log GAD") 
-qqline(df$log_GAD_T)
-```
+sdcdscsdcsdcsdc
 
 
 
-```{r, logtransswl}
-# Log-transform the SPIN_T column (adding 1 to avoid log(0))
-df$log_SPIN_T <- log(df$SPIN_T + 1)
-
-# Create the histogram with a KDE curve
-ggplot(data = df, aes(x = log_SPIN_T)) +
-  geom_histogram(aes(y = ..density..),  # Use density for y-axis
-                 binwidth = 1,
-                 color = "orange",
-                 fill = "purple",
-                 alpha = 0.7) +  # Opacity
-  geom_density(color = "blue",           # Color of the KDE curve
-               size = 1,                 # Thickness of the curve
-               adjust = 1) +             # Adjust bandwidth for fitting
-  labs(x = "SPIN Log Total Score", 
-       y = "Density",                  # Change to Density for y-axis
-       title = "SPIN Log Distribution with KDE") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-
-qqnorm(df$log_SPIN_T, main="Q-Q plot for Log SPIN") 
-qqline(df$log_SPIN_T)
 
 
-```
 
-```{r}
-# boxplot(mlb$height, main="Boxplot of Baseball Player Height", ylab="Height (inches)", col = 'red' )
-# ggplot(mlb, aes(y=height)) + 
-#   geom_boxplot() + 
-#   geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
-#   labs(title="Boxplot of Baseball Player Height using `ggplot`", x="", y = "Height (inches)")
-```
 
-Now the Q-Q plot, adding a theoretical line to the plot.
 
-```{r}
-# qqnorm(mlb$height, main="Q-Q plot of Baseball Player Heights") 
-# qqline(mlb$height)
-# shapiro.test(mlb$height) # Shapiro-Wilk test for normality
-# ks.test(mlb$height,pnorm) # Kolmogorov-Smirnov Tests against normal distribution
-```
 
-We'll talk more about the shapiro test after we introduce formal statistical testings. In the meantime, we can look into other EDA tools and techniques.
 
-## Standardizing 
-``` {r, standardizing}
-df$GAD_T_Stand <- scale(df$GAD_T)
-df$SWL_T_Stand <- scale(df$SWL_T)
-df$SPIN_T_Stand <- scale(df$SPIN_T)
-```
 
-``` {r, plotting_newGAD}
-ggplot(data = df, aes(x = GAD_T_Stand)) +
-  geom_histogram(binwidth = 1,
-                 color = "red",
-                 fill = "blue",
-                 alpha = .7) + # opacity
-  labs(x = "GAD Standardized", y = "Frequency", title = "GAD Stand Distribution") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
 
-qqnorm(df$GAD_T_Stand, main="Q-Q plot for Stand GAD") 
-qqline(df$GAD_T_Stand)
-```
+## Hypothesis Tests (add in any I am missing or change the names in needed. Each test will have a visualization)
 
-``` {r, plotting_newSWL}
-# Create the histogram with a KDE curve
-ggplot(data = df, aes(x = SWL_T_Stand)) +
-  geom_histogram(aes(y = ..density..),  # Use density for y-axis
-                 binwidth = 1,
-                 color = "orange",
-                 fill = "purple",
-                 alpha = 0.7) +  # Opacity
-  geom_density(color = "blue",           # Color of the KDE curve
-               size = 1,                 # Thickness of the curve
-               adjust = 1) +             # Adjust bandwidth for fitting
-  labs(x = "GAD Stand Log Total Score", 
-       y = "Density",                  # Change to Density for y-axis
-       title = "GAD Stand Distribution with KDE") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
+words on each of the test we ran and why
 
-qqnorm(df$SWL_T_Stand, main="Q-Q plot for Stand SWL") 
-qqline(df$SWL_T_Stand)
-```
 
-``` {r, plotting_newSPIN}
-# Create the histogram with a KDE curve
-ggplot(data = df, aes(x = SPIN_T_Stand)) +
-  geom_histogram(aes(y = ..density..),  # Use density for y-axis
-                 binwidth = 1,
-                 color = "orange",
-                 fill = "purple",
-                 alpha = 0.7) +  # Opacity
-  geom_density(color = "blue",           # Color of the KDE curve
-               size = 1,                 # Thickness of the curve
-               adjust = 1) +             # Adjust bandwidth for fitting
-  labs(x = "GAD Stand Log Total Score", 
-       y = "Density",                  # Change to Density for y-axis
-       title = "GAD Stand Distribution with KDE") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
+### Hours Played and Hours Streamed (ANOVA)
 
-qqnorm(df$SPIN_T_Stand, main="Q-Q plot for Stand SPIN") 
-qqline(df$SPIN_T_Stand)
-
-mean_spin = mean(df$SPIN_T_Stand, na.rm = TRUE)
-mean_spin
-```
-
-## Pearsons Corrleation
-### SWL and Hours...for now
-``` {r, corr_h_swl}
-correlation_result <- cor(df$Hours, df$SWL_T, method = "pearson", use = "complete.obs")
-print(correlation_result)
-
-cor_test <- cor.test(df$Hours, df$SWL_T)
-cor_test
-```
 
 This very weak negative correlation means that an increase in hours played slightly results in a lower SWL score (less life satisfaction).
 
-### hours and streams
-``` {r, corr_h_s}
-correlation_result <- cor(df$Hours, df$streams, method = "pearson", use = "complete.obs")
-print(correlation_result)
-
-cor_test <- cor.test(df$Hours, df$streams)
-cor_test
-```
-## chi-squared 
-
-### chi-squared for GAD and WhyPlay
+### Inventories and Hours Played (ANOVA)
 
 
-null hypothesis is that there is no relation. Alternate is that there is. 
-```{r contingency, include=TRUE}
-contingency_table <- table(df$GAD_ord, df$cleaned_whyplay)
+### GADE and WhyPlay (chi-sqaured)
+.......
 
-# Print the contingency table
-print(contingency_table)
+### Inventories and WhyPlay (chi-sqauared)
 
-chi_squared_test <- chisq.test(contingency_table)
-
-# Print the results of the Chi-squared test
-chi_squared_test
-```
-
-the very low p-value of 0.0000000000000002 indicates very strong evidence against the null hypothesis. We reject the null
+......
 
 
-Post-hoc analysis 
+## Keys Findings 
 
-``` {r, posthoc}
-expected_counts <- chisq.test(contingency_table)$expected
+Here we will restate the key fidnings for each test, why they matter, and what it tells us about gaming and mental health.
 
-# Calculate residuals
-residuals <- contingency_table - expected_counts
+## Reccomednations 
 
-# Calculate adjusted residuals
-adjusted_residuals <- residuals / sqrt(expected_counts)
+Here we will state what we think should be done next (project part 2)
 
-# Print adjusted residuals
-print(adjusted_residuals)
-
-residuals_df <- melt(adjusted_residuals)
-
-# Create a heatmap
-ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
-  geom_tile() +
-  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-  labs(title = "GAD and WhyPlay Adjusted Residuals Heatmap", x = "GAD", y = "whyplay") +
-  theme_minimal()+
-  theme(plot.title = element_text(hjust = 0.5))
-
-contingency_df <- as.data.frame(contingency_table)
-
-# Plot
-ggplot(contingency_df, aes(x = Var1, y = Freq, fill = Var2)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "GAD Ordinal Categories", y = "Frequency", fill = "Why Play") +
-  theme_minimal()
-```
+"We reccomedn running a logisitic regression blah blah blah" 
 
 
 
 
-### chi-squared for SPIN and WhyPlay
 
 
-null hypothesis is that there is no relation. Alternate is that there is. 
-```{r contingency2, include=TRUE}
-contingency_table <- table(df$SPIN_ord, df$cleaned_whyplay)
-
-# Print the contingency table
-print(contingency_table)
-
-chi_squared_test <- chisq.test(contingency_table)
-
-# Print the results of the Chi-squared test
-chi_squared_test
-```
-
-the very low p-value of 0.0000000000000002 indicates very strong evidence against the null hypothesis. We reject the null
-
-
-Post-hoc analysis 
-
-``` {r, posthoc2}
-expected_counts <- chisq.test(contingency_table)$expected
-
-# Calculate residuals
-residuals <- contingency_table - expected_counts
-
-# Calculate adjusted residuals
-adjusted_residuals <- residuals / sqrt(expected_counts)
-
-# Print adjusted residuals
-print(adjusted_residuals)
-
-residuals_df <- melt(adjusted_residuals)
-
-# Create a heatmap
-ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
-  geom_tile() +
-  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-  labs(title = "SPIN and WhyPlay Adjusted Residuals Heatmap", x = "SPIN", y = "whyplay") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-
-contingency_df <- as.data.frame(contingency_table)
-
-# Plot
-ggplot(contingency_df, aes(x = Var1, y = Freq, fill = Var2)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "SPIN Ordinal Categories", y = "Frequency", fill = "Why Play") +
-  theme_minimal()
-```
-
-### chi-squared for SWL and WhyPlay
-
-
-null hypothesis is that there is no relation. Alternate is that there is. 
-```{r contingency3, include=TRUE}
-contingency_table <- table(df$SWL_ord, df$cleaned_whyplay)
-
-# Print the contingency table
-print(contingency_table)
-
-chi_squared_test <- chisq.test(contingency_table)
-
-# Print the results of the Chi-squared test
-chi_squared_test
-```
-
-the very low p-value of 0.0000000000000002 indicates very strong evidence against the null hypothesis. We reject the null
-
-
-Post-hoc analysis 
-
-``` {r, posthoc3}
-expected_counts <- chisq.test(contingency_table)$expected
-
-# Calculate residuals
-residuals <- contingency_table - expected_counts
-
-# Calculate adjusted residuals
-adjusted_residuals <- residuals / sqrt(expected_counts)
-
-# Print adjusted residuals
-print(adjusted_residuals)
-
-
-residuals_df <- melt(adjusted_residuals)
-
-# Create a heatmap
-ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
-  geom_tile() +
-  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-  labs(title = "SWL and WhyPlay Adjusted Residuals Heatmap", x = "SWL", y = "whyplay") +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate x-axis labels
-  )
-
-contingency_df <- as.data.frame(contingency_table)
-
-# Plot
-ggplot(contingency_df, aes(x = Var1, y = Freq, fill = Var2)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "SWL Ordinal Categories", y = "Frequency", fill = "Why Play") +
-  theme_minimal()
-```
