@@ -773,6 +773,15 @@ qqline(df_clean$streams_Stand)
 
 explain
 
+Correlation?
+#### Hours and Streams (Pearson's Correlation)
+```{r, corr_h_s}
+cor_test <- cor.test(hrs_GAD_filtered_clean$Hours, df_clean$streams)
+correlation_result_Hours_Streams <- cor(hrs_GAD_filtered_clean$Hours, df_clean$streams, method = "pearson", use = "complete.obs")
+cor_test
+```
+
+words about test
 
 #### Adding Hours and Streams -> Total Time, and creating histogram and QQ-plot
 
@@ -819,15 +828,7 @@ ggplot(df, aes(x = df$hrs_stream_combined)) +
 
 explain
 
-Correlation?
-#### Hours and Streams (Pearson's Correlation)
-```{r, corr_h_s}
-cor_test <- cor.test(hrs_GAD_filtered_clean$Hours, df_clean$streams)
-correlation_result_Hours_Streams <- cor(hrs_GAD_filtered_clean$Hours, df_clean$streams, method = "pearson", use = "complete.obs")
-cor_test
-```
 
-words about test
 
 
 ### Hours Converstion of Ordinal
