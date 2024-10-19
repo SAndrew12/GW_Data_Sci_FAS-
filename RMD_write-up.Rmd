@@ -33,8 +33,9 @@ options(scientific=T, digits = 3)
 ```
 
 ```{r read-in, include=TRUE}
-df <- read_csv("GamingStudy_data.csv")
+df <- read.csv("GamingStudy_data.csv")
 ```
+
 
 ## Introduction
 
@@ -522,11 +523,312 @@ print(fig)
 
 ### Removing Outliers in Hours and Streams
 
-kvfvdfvdfv
+#### Hours
+#### Finding outliers in Hours
 
-Hours and streams combitnation to Total Hours
+```{r}
+
+# Replace missing values in the Hours column with NA explicitly
+hrs_data_cleaned <- df %>%
+  mutate(Hours = ifelse(is.na(Hours), NA, Hours))
+missing_values <- colSums(is.na(hrs_data_cleaned))
+
+# Filter necessary columns
+hrs_GAD_filtered <- hrs_data_cleaned %>%
+  select(Hours, GAD1:GAD7, GAD_T)
+
+# Finding outliers in Hours
+ggplot(hrs_GAD_filtered, aes(x=Hours)) + 
+  geom_boxplot() + 
+  geom_boxplot(colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Outliers in Hours spent gaming per week", x="Hours spent (per week)", y = "") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),  # Center and bold title
+    axis.title.x = element_text(hjust = 0.5, face = "bold"), # Bold and center x-axis label
+    axis.title.y = element_text(hjust = 0.5, face = "bold")  # Bold and center y-axis label
+  )
+```
+
+words about plot
+
+#### Removing outliers in Hours and generating QQ-plot
+
+```{r}
+# Define the outlierKD2 function
+outlierKD2 <- function(dt, var, rm = TRUE, boxplt = TRUE, qqplt = TRUE) { 
+  var_name <- eval(substitute(var),eval(dt))
+  na1 <- sum(is.na(var_name))
+  m1 <- mean(var_name, na.rm = TRUE)
+  
+  # Generate plots (boxplot and histogram)
+  if (boxplt) {
+    par(mfrow = c(2, 2), oma = c(0, 0, 3, 0))
+    boxplot(var_name, main = "With outliers")
+    hist(var_name, main = "With outliers", xlab = NA, ylab = NA)
+  }
+  
+  outlier <- boxplot.stats(var_name)$out
+  mo <- mean(outlier)
+  
+  var_name <- ifelse(var_name %in% outlier, NA, var_name)
+  
+  if (boxplt) {
+    boxplot(var_name, main = "Without outliers")
+    hist(var_name, main = "Without outliers", xlab = NA, ylab = NA)
+  }
+  
+  # Generate QQ plot if requested
+  if (qqplt) {
+    qqnorm(var_name)
+    qqline(var_name)
+  }
+  
+  na2 <- sum(is.na(var_name))
+  
+  cat("Outliers identified:", na2 - na1, "\n")
+  cat("Proportion (%) of outliers:", round((na2 - na1) / sum(!is.na(var_name)) * 100, 1), "\n")
+  cat("Mean of the outliers:", round(mo, 2), "\n")
+  m2 <- mean(var_name, na.rm = TRUE)
+  cat("Mean without removing outliers:", round(m1, 2), "\n")
+  cat("Mean if we remove outliers:", round(m2, 2), "\n")
+  
+  # Option to remove outliers (replace with NA)
+  if (rm) {
+    dt[[as.character(substitute(var))]] <- invisible(var_name)
+    assign(as.character(as.list(match.call())$dt), dt, envir = .GlobalEnv)
+    cat("Outliers successfully removed\n")
+    return(invisible(dt))
+  } else {
+    cat("Nothing changed\n")
+    return(invisible(var_name))
+  }
+}
+
+# Use outlierKD2 to remove outliers from 'Hours'
+hrs_GAD_filtered_clean <- outlierKD2(hrs_GAD_filtered, Hours, rm = TRUE, boxplt = FALSE, qqplt = TRUE)
+
+```
+
+
+
+#### Create a histogram and boxplot for Cleaned Hours 
+
+```{r}
+hist(hrs_GAD_filtered_clean$Hours, main = "Histogram of Hours Spent Gaming", xlab = "Hours spent (per week)", col = "lightblue")
+
+ggplot(hrs_GAD_filtered_clean, aes(x=hrs_GAD_filtered_clean$Hours)) + 
+  geom_boxplot() + 
+  geom_boxplot(colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Hours spent gaming per week (Outliers excluded)", x="Hours spent (per week)", y = "") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),  # Center and bold title
+    axis.title.x = element_text(hjust = 0.5, face = "bold"), # Bold and center x-axis label
+    axis.title.y = element_text(hjust = 0.5, face = "bold")  # Bold and center y-axis label
+  )
+```
+
+words about plot
+
+#### Streams
+#### Finding outliers in Streams 
+
+```{r}
+ggplot(df, aes(x=streams)) + 
+  geom_boxplot() + 
+  geom_boxplot(colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Outliers in streaming per week", x="Streaming (per week)", y = "") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),  # Center and bold title
+    axis.title.x = element_text(hjust = 0.5, face = "bold"), # Bold and center x-axis label
+    axis.title.y = element_text(hjust = 0.5, face = "bold")  # Bold and center y-axis label
+  )
+
+
+```
+
+words about plot
+
+
+#### Removing outliers in Streams and generating QQ-plot
+
+```{r}
+# Define the outlierKD2 function 
+outlierKD2 <- function(dt, var, rm = TRUE, boxplt = TRUE, qqplt = TRUE) { 
+  var_name <- eval(substitute(var),eval(dt))
+  na1 <- sum(is.na(var_name))
+  m1 <- mean(var_name, na.rm = TRUE)
+  
+  # Generate plots (boxplot and histogram)
+  if (boxplt) {
+    par(mfrow = c(2, 2), oma = c(0, 0, 3, 0))
+    boxplot(var_name, main = "With outliers")
+    hist(var_name, main = "With outliers", xlab = NA, ylab = NA)
+  }
+  
+  outlier <- boxplot.stats(var_name)$out
+  mo <- mean(outlier)
+  
+  var_name <- ifelse(var_name %in% outlier, NA, var_name)
+  
+  if (boxplt) {
+    boxplot(var_name, main = "Without outliers")
+    hist(var_name, main = "Without outliers", xlab = NA, ylab = NA)
+  }
+  
+  # Generate QQ plot if requested
+  if (qqplt) {
+    qqnorm(var_name)
+    qqline(var_name)
+  }
+  
+  na2 <- sum(is.na(var_name))
+  
+  cat("Outliers identified:", na2 - na1, "\n")
+  cat("Proportion (%) of outliers:", round((na2 - na1) / sum(!is.na(var_name)) * 100, 1), "\n")
+  cat("Mean of the outliers:", round(mo, 2), "\n")
+  m2 <- mean(var_name, na.rm = TRUE)
+  cat("Mean without removing outliers:", round(m1, 2), "\n")
+  cat("Mean if we remove outliers:", round(m2, 2), "\n")
+  
+  # Option to remove outliers (replace with NA)
+  if (rm) {
+    dt[[as.character(substitute(var))]] <- invisible(var_name)
+    assign(as.character(as.list(match.call())$dt), dt, envir = .GlobalEnv)
+    cat("Outliers successfully removed\n")
+    return(invisible(dt))
+  } else {
+    cat("Nothing changed\n")
+    return(invisible(var_name))
+  }
+}
+
+# Use outlierKD2 to remove outliers from 'streams'
+df_clean <- outlierKD2(df, streams, rm = TRUE, boxplt = FALSE, qqplt = TRUE)
+
+```
+
+
+
+#### Create a histogram and boxplot for Cleaned Streams
+
+```{r}
+hist(df_clean$streams, main = "Histogram of Time Spent watching Steams, Tournaments, etc. (hrs/week)
+", xlab = "Time Spent watching Steams, Tournaments, etc. (hrs/week)
+ ", col = "lightblue")
+
+ggplot(df_clean, aes(x=df_clean$streams)) + 
+  geom_boxplot() + 
+  geom_boxplot(colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Streaming per week (Outliers excluded )", x="Streaming (per week)", y = "") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),  # Center and bold title
+    axis.title.x = element_text(hjust = 0.5, face = "bold"), # Bold and center x-axis label
+    axis.title.y = element_text(hjust = 0.5, face = "bold")  # Bold and center y-axis label
+  )
+
+```
+
+words about plot, why standardization will be done
+
+
+#### Standardizing Hours and Streams Cleaned data
+``` {r}
+df_clean$streams_Stand <- scale(df_clean$streams)
+hrs_GAD_filtered_clean$hours_Stand <- scale(hrs_GAD_filtered_clean$Hours)
+
+```
+
+#### Hours histogram and QQ-plot after standardizing
+```{r, plotting_hours}
+# Histogram for standardized Hours
+ggplot(data = hrs_GAD_filtered_clean, aes(x = hours_Stand)) +
+  geom_histogram(binwidth = 1, color = "red", fill = "blue", alpha = .7) +
+  labs(x = "Hours Standardized", y = "Frequency", title = "Hours Stand Distribution") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Q-Q plot for standardized Hours
+qqnorm(hrs_GAD_filtered_clean$hours_Stand, main = "Q-Q plot for Stand Hours")
+qqline(hrs_GAD_filtered_clean$hours_Stand)
+
+
+```
+explain
+
+
+#### Stream histogram and QQ-plot after standardizing
+``` {r, plotting_streams}
+# Histogram for standardized Streams
+ggplot(data = df_clean, aes(x = streams_Stand)) +
+  geom_histogram(binwidth = 1, color = "red", fill = "blue", alpha = .7) +
+  labs(x = "Streams Standardized", y = "Frequency", title = "Streams Stand Distribution") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Q-Q plot for standardized Streams
+qqnorm(df_clean$streams_Stand, main = "Q-Q plot for Stand Streams")
+qqline(df_clean$streams_Stand)
+
+```
+
+explain
+
+
+#### Adding Hours and Streams -> Total Time, and creating histogram and QQ-plot
+
+```{r}
+# Create the new column hrs_stream_combined in df
+df$hrs_stream_combined <- df_clean$streams + hrs_GAD_filtered_clean$Hours
+
+hist(df$hrs_stream_combined, 
+     main = "", # Set an empty main to customize it later
+     xlab = "", # Set an empty xlab to customize it later
+     ylab = "", # Set an empty ylab to customize it later
+     col = "lightblue")
+
+# Customize the title and labels
+title(main = "Histogram: Total time Spent watching Streams, Tournaments, etc.",
+      xlab = "Time Spent (hrs/week)",
+      ylab = "Frequency",        # Add the y-axis label
+      font.main = 2,  # Bold title
+      font.lab = 2,   # Bold x and y labels
+      cex.main = 1.2, # Adjust title size
+      cex.lab = 1.2   # Adjust label size for both axes
+)
+
+# Q-Q plot for Total Time
+qqnorm(df$hrs_stream_combined, main = "Q-Q plot for Total time")
+qqline(df$hrs_stream_combined)
+
+
+```
+
+
+#### Histogram of Total Time distribution on GAD_ordinal variables
+```{r}
+ggplot(df, aes(x = df$hrs_stream_combined)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
+  facet_wrap(~ GAD_ord) +
+  labs(title = "Histogram of Total time spent on game and streaming by GAD_ordinal",
+       x = "Hours played/week",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+explain
 
 Correlation?
+#### Hours and Streams (Pearson's Correlation)
+```{r, corr_h_s}
+cor_test <- cor.test(hrs_GAD_filtered_clean$Hours, df_clean$streams)
+correlation_result_Hours_Streams <- cor(hrs_GAD_filtered_clean$Hours, df_clean$streams, method = "pearson", use = "complete.obs")
+cor_test
+```
+
+words about test
+
 
 ### Hours Converstion of Ordinal
 
@@ -564,9 +866,125 @@ This very weak negative correlation means that an increase in hours played sligh
 ......
 
 
+#### ANOVA test for Total time spent and GAD_ordinal variables
+
+Null: There is no difference in the mean combined hours spent on gaming and streaming among the different levels of GAD.
+Alternate: At least one group mean of the combined hours spent on gaming and streaming is different from the others among the different levels of GAD.
+```{r}
+
+# Combine the hours played and streams into a new variable
+df$hrs_stream_combined <- df_clean$streams + hrs_GAD_filtered_clean$Hours
+
+# Perform the ANOVA test
+anova_result_combined <- aov(hrs_stream_combined ~ GAD_ord, data = df)
+
+# Summarize the ANOVA results
+summary(anova_result_combined)
+
+```
+
+p values small so we reject the null hypothesis. This indicates that there is a statistically significant difference in the mean combined hours spent on gaming and streaming among the different levels of GAD.
+
+#### Post hoc test
+
+```{r}
+# Perform the ANOVA
+anova_result <- aov(hrs_stream_combined ~ GAD_ord, data = df)
+
+# Perform Tukey HSD post-hoc test
+tukey_result <- TukeyHSD(anova_result)
+
+# Display the Tukey HSD results
+print(tukey_result)
+
+# Optional: Plot the Tukey HSD results
+plot(tukey_result)
+
+```
+
+explain
+
 ## Keys Findings 
 
 Here we will restate the key fidnings for each test, why they matter, and what it tells us about gaming and mental health.
+
+
+#### GAD_T_ordinal based on why they play
+```{r GAD_ord vs why_play}
+
+
+ggplot(df, aes(x = GAD_ord, fill = cleaned_whyplay)) +
+  geom_bar(position = "fill") +  # Use position = "fill" to show proportions
+  ylab("Proportion") +           # Label the y-axis
+  xlab("Severity of the Generalized Anxiety Disorder") +           # Label the x-axis
+  labs(title = "Proportion of Reasons for Playing by GAD Scores",
+       fill = "Reasons for Playing") +  # Rename the legend title
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),  # Center and bold the title
+    axis.title.x = element_text(face = "bold", size = 12),  # Bold and size for x-axis label
+    axis.title.y = element_text(face = "bold", size = 12),  # Bold and size for y-axis label
+    axis.text.x = element_text(face = "bold", size = 10),   # Bold the x-axis tick labels
+    axis.text.y = element_text(face = "bold", size = 10),   # Bold the y-axis tick labels
+    legend.title = element_text(face = "bold"),             # Bold the legend title
+    legend.text = element_text(face = "bold")               # Bold the legend labels
+  )
+
+
+```
+
+explain
+
+####  GADE_ordinal based on why they play
+
+```{r}
+ggplot(df, aes(x = GADE, fill = cleaned_whyplay)) +
+  geom_bar(position = "fill") +  # Use position = "fill" to show proportions
+  ylab("Proportion") +           # Label the y-axis
+  xlab("Generalized Anxiety Disorder Effect in Life") +           # Label the x-axis
+  labs(title = "Proportion of Reasons for Playing by GADE Scores",
+       fill = "Reasons for Playing") +  # Rename the legend title
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),  # Center and bold the title
+    axis.title.x = element_text(face = "bold", size = 12),  # Bold and size for x-axis label
+    axis.title.y = element_text(face = "bold", size = 12),  # Bold and size for y-axis label
+    axis.text.x = element_text(face = "bold", size = 10, angle = 45, hjust = 1),   # Rotate and bold the x-axis tick labels
+    axis.text.y = element_text(face = "bold", size = 10),   # Bold the y-axis tick labels
+    legend.title = element_text(face = "bold"),             # Bold the legend title
+    legend.text = element_text(face = "bold")               # Bold the legend labels
+  )
+
+
+```
+
+explain
+
+#### SPIN_ord_ordinal based on why they play
+```{r SPIN_ord vs why_play}
+
+ggplot(df, aes(x = SPIN_ord, fill = cleaned_whyplay)) +
+  geom_bar(position = "fill") +  # Use position = "fill" to show proportions
+  ylab("Proportion") +           # Label the y-axis
+  xlab("Total score on the Social Phobia Inventory") +          # Label the x-axis
+  labs(title = "Proportion of Reasons for Playing by SPIN Scores",
+       fill = "Reasons for Playing") +  # Rename the legend title
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),  # Center and bold the title
+    axis.title.x = element_text(face = "bold", size = 12),  # Bold and size for x-axis label
+    axis.title.y = element_text(face = "bold", size = 12),  # Bold and size for y-axis label
+    axis.text.x = element_text(face = "bold", size = 10),   # Bold the x-axis tick labels
+    axis.text.y = element_text(face = "bold", size = 10),   # Bold the y-axis tick labels
+    legend.title = element_text(face = "bold"),             # Bold the legend title
+    legend.text = element_text(face = "bold")               # Bold the legend labels
+  )
+  
+
+```
+
+explain
+
 
 ## Reccomednations 
 
