@@ -22,6 +22,8 @@ library(rstatix)
 library(knitr)
 library(kableExtra)
 library(reshape2)
+library(gridExtra)
+library(patchwork)
 ```
 
 
@@ -860,14 +862,190 @@ This very weak negative correlation means that an increase in hours played sligh
 
 
 ### GADE and WhyPlay (chi-sqaured)
-.......
+...........
 
 ### Inventories and WhyPlay (chi-sqauared)
 
-......
+Based on our theory that the reason why respondents play video games could be an indicators of their mental health, we conducted a chi-squared test of independence against "whyplay" and the inventories. This test determined, with statistical significance, that the "wayplay" and respondents mental healh scores on each of the three inventories are dependent (associated).
+
+```{r contingency, include=TRUE}
+contingency_table_gad <- table(df$GAD_ord, df$cleaned_whyplay)
 
 
-#### ANOVA test for Total time spent and GAD_ordinal variables
+chi_squared_test_gad <- chisq.test(contingency_table_gad)
+
+# Print the results of the Chi-squared test
+chi_squared_test_gad
+```
+
+```{r contingency3, include=TRUE}
+contingency_table_swl <- table(df$SWL_ord, df$cleaned_whyplay)
+
+
+chi_squared_test_swl <- chisq.test(contingency_table_swl)
+
+# Print the results of the Chi-squared test
+chi_squared_test_swl
+```
+
+```{r contingency2, include=TRUE}
+contingency_table_spin <- table(df$SPIN_ord, df$cleaned_whyplay)
+
+
+
+chi_squared_test_spin <- chisq.test(contingency_table_spin)
+
+# Print the results of the Chi-squared test
+chi_squared_test_spin
+```
+
+In the above chi-sqauared outputs, we see a p-value of 0.00000000000000002. This values, orders of magnitude smaller than 0.05, tells us that "whyplay" and all three inventories are dependent.
+
+The following post-hoc test calculates the adjusted residuals, which in effect are the difference between the expected and actual output. 
+
+``` {r, posthoc}
+expected_counts <- chisq.test(contingency_table_gad)$expected
+
+# Calculate residuals
+residuals <- contingency_table_gad - expected_counts
+
+# Calculate adjusted residuals
+adjusted_residuals <- residuals / sqrt(expected_counts)
+
+# Print adjusted residuals
+print(adjusted_residuals)
+
+
+residuals_df <- melt(adjusted_residuals)
+
+# Create a heatmap
+ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "GAD and WhyPlay Adjusted Residuals Heatmap", x = "GAD Scale", y = "WhyPlay") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+#contingency_df <- as.data.frame(contingency_table_gad)
+
+
+```
+
+
+``` {r, posthoc3}
+expected_counts <- chisq.test(contingency_table_swl)$expected
+
+# Calculate residuals
+residuals <- contingency_table_swl - expected_counts
+
+# Calculate adjusted residuals
+adjusted_residuals <- residuals / sqrt(expected_counts)
+
+# Print adjusted residuals
+print(adjusted_residuals)
+
+
+
+residuals_df <- melt(adjusted_residuals)
+
+# Create a heatmap
+ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "SWL and WhyPlay Adjusted Residuals Heatmap", x = "SWL SCale", y = "WhyPlay") +
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+#contingency_df <- as.data.frame(contingency_table_swl)
+
+
+```
+
+``` {r, posthoc2}
+expected_counts <- chisq.test(contingency_table_spin)$expected
+
+# Calculate residuals
+residuals <- contingency_table_spin - expected_counts
+
+# Calculate adjusted residuals
+adjusted_residuals <- residuals / sqrt(expected_counts)
+
+# Print adjusted residuals
+print(adjusted_residuals)
+
+
+residuals_df <- melt(adjusted_residuals)
+
+# Create a heatmap
+ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "SPIN and WhyPlay Adjusted Residuals Heatmap", x = "SPIN Scale", y = "WhyPlay") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+#contingency_df <- as.data.frame(contingency_table_spin)
+
+
+```
+
+```{r, posthoc_all, fig.width=17}
+
+# GAD heatmap
+expected_counts_gad <- chisq.test(contingency_table_gad)$expected
+residuals_gad <- contingency_table_gad - expected_counts_gad
+adjusted_residuals_gad <- residuals_gad / sqrt(expected_counts_gad)
+residuals_df_gad <- melt(adjusted_residuals_gad)
+
+heatmap_gad <- ggplot(residuals_df_gad, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "GAD and WhyPlay Adjusted Residuals Heatmap", x = "GAD Scale", y = "WhyPlay") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# SWL heatmap
+expected_counts_swl <- chisq.test(contingency_table_swl)$expected
+residuals_swl <- contingency_table_swl - expected_counts_swl
+adjusted_residuals_swl <- residuals_swl / sqrt(expected_counts_swl)
+residuals_df_swl <- melt(adjusted_residuals_swl)
+
+heatmap_swl <- ggplot(residuals_df_swl, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "SWL and WhyPlay Adjusted Residuals Heatmap", x = "SWL Scale", y = "WhyPlay") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+# SPIN heatmap
+expected_counts_spin <- chisq.test(contingency_table_spin)$expected
+residuals_spin <- contingency_table_spin - expected_counts_spin
+adjusted_residuals_spin <- residuals_spin / sqrt(expected_counts_spin)
+residuals_df_spin <- melt(adjusted_residuals_spin)
+
+heatmap_spin <- ggplot(residuals_df_spin, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "SPIN and WhyPlay Adjusted Residuals Heatmap", x = "SPIN Scale", y = "WhyPlay") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Combine the heatmaps side by side
+combined_heatmaps <- heatmap_gad + heatmap_swl + heatmap_spin
+combined_heatmaps + plot_layout(ncol = 3)
+```
+
+### ANOVA test for Total time spent and GAD_ordinal variables
+
+we need more words on this. talk through that we did, don't just state it. it is supposed to be a paper
 
 Null: There is no difference in the mean combined hours spent on gaming and streaming among the different levels of GAD.
 Alternate: At least one group mean of the combined hours spent on gaming and streaming is different from the others among the different levels of GAD.
