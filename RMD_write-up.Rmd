@@ -35,7 +35,7 @@ options(scientific=T, digits = 3)
 ```
 
 ```{r read-in, include=TRUE}
-df <- read.csv("GamingStudy_data.csv")
+df <- read.csv("G:\\My Drive\\Flash Drive Contents\\E\\Graduate School\\The George Washington Univeristy\\Data Science\\DATS 6101_12 (Morris)\\Project 1\\GamingStudy_data.csv")
 ```
 
 
@@ -795,8 +795,6 @@ ggplot(data = df_clean, aes(x = streams_Stand)) +
 
 Even after standardizing the streaming time values, the plots depict that the standardized values are not yet normal. Both the plots confirm that the data is more concentrated towards the left side.
 
-
-
 ### Adding Hours and Streams -> Total Time, and creating histogram and QQ-plot
 
 Previously, We have seen from the Pearson correlation test that there exists a very weak positive correlation when we tried to find a relation between hours and streams variables (which are free of outliers) and the both the variables not normally distributed (even after standardization). So now we tried to combine the two time variables and try to see if the combined data can be used for further analysis.
@@ -828,11 +826,9 @@ ggplot(data = df, aes(x = hrs_stream_combined)) +
 
 We can clearly see from the generated Q-Q plot and histogram that the combined data called (now called Total time spent on watching streaming and playing games) has now look near to normal. This data is now suitable to conduct all kinds of tests that require normality of data.
 
-
 ### Histogram of Total Time distribution on GAD_ordinal variables
 
 We now try to see the distribution of total time spent on playing games and streaming based on GAD ordinal classification (minimal/ mild/ moderate/ severe levels of anxiety). 
-
 
 ```{r}
 ggplot(df, aes(x = df$hrs_stream_combined)) +
@@ -859,9 +855,7 @@ For hours spent playing and hours spent streaming, an ANOVA test will be conduct
 
 For each of the psychological inventories and hours spent playing, ANOVA tests will be conducted to see if there are significant differences among the different ordinal categories of each psychological inventory and hours spent playing.
 
-For GADE and the reason for playing, a chi-squared test will be conducted to see if the two variables are independent of each other.
-
-For each of the psychological inventories and the reason for playing, chi-squared tests will be conducted to see if the variables are independent of each other.
+For each of the psychological inventories, along with GADE, and the reason for playing, chi-squared tests will be conducted to see if the variables are independent of each other.
 
 ### Hours Playing and Streaming (ANOVA)
 
@@ -1022,7 +1016,7 @@ chi_squared_test_spin <- chisq.test(contingency_table_spin)
 chi_squared_test_spin
 ```
 
-In the above chi-sqauared outputs, we see a p-value of 0.00000000000000002. This values, orders of magnitude smaller than 0.05, tells us that "whyplay" and all three inventories are dependent.
+In the above chi-squared outputs, we see p-values less than 2.0E-16. These values are several orders of magnitude smaller than 0.05, which tells us that "whyplay" and all three inventories, along with GADE, have some level of dependency.
 
 The following post-hoc test calculates the adjusted residuals, which in effect are the difference between the expected and actual output. 
 
@@ -1173,12 +1167,9 @@ plot(tukey_result)
 
 The results suggest that individuals with higher levels of GAD (severe and moderate) tend to spend more combined hours on gaming and streaming compared to those with minimal anxiety. However, the difference between some intermediate levels (e.g., moderate vs. mild) is not statistically significant.
 
-
-
 ## Keys Findings 
 
-Here we will restate the key findings for each test, why they matter, and what it tells us about gaming and mental health.
-
+Hours spent playing video games and hours spent streaming: there is no significant difference across all ordinal categories. GAD and hours played: a person is more likely to experience symptoms of generalized anxiety if the hours they spend playing video games is anywhere from low to moderate, low to high, or moderate to high. SWL and hours played:  satisfaction with life is significantly affected if video games are played within the low to moderate range. SPIN and hours played: a person is more likely to experience social anxiety or phobias if they play video games anywhere within the low to moderate range. For all the inventories, along with GADE, and the reason for playing video games, there is some level of dependency among them.
 
 #### GAD_T_ordinal based on why they play
 ```{r GAD_ord vs why_play}
@@ -1256,13 +1247,7 @@ ggplot(df, aes(x = SPIN_ord, fill = cleaned_whyplay)) +
 
 explain
 
+## Recommendations 
 
-## Recommednations 
-
-Here we will state what we think should be done next (project part 2)
-
-"We recommend running a logisitic regression blah blah blah" 
-
-
-
+To improve on our current work and findings, we could apply regression techniques, linear or logisitic, to predict outcomes of time spent playing or streaming video games based on the current pshychological inventories we have analyzed at length.
 
