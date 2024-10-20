@@ -1267,6 +1267,19 @@ heatmap_gad <- ggplot(residuals_df_gad, aes(Var1, Var2, fill = value)) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
+# GADE heatmap
+expected_counts_GADE <- chisq.test(contingency_table_GADE)$expected
+residuals_GADE <- contingency_table_GADE - expected_counts_GADE
+adjusted_residuals_GADE <- residuals_GADE / sqrt(expected_counts_GADE)
+residuals_df_GADE <- melt(adjusted_residuals_spin)
+
+heatmap_spin <- ggplot(residuals_df_spin, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "GADE and WhyPlay Adjusted Residuals Heatmap", x = "GADE Scale", y = "WhyPlay") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
 # SWL heatmap
 expected_counts_swl <- chisq.test(contingency_table_swl)$expected
 residuals_swl <- contingency_table_swl - expected_counts_swl
@@ -1295,6 +1308,7 @@ heatmap_spin <- ggplot(residuals_df_spin, aes(Var1, Var2, fill = value)) +
   labs(title = "SPIN and WhyPlay Adjusted Residuals Heatmap", x = "SPIN Scale", y = "WhyPlay") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
+
 
 # Combine the heatmaps side by side
 combined_heatmaps <- heatmap_gad + heatmap_swl + heatmap_spin
