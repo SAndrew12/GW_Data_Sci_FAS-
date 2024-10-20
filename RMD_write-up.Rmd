@@ -1273,7 +1273,7 @@ residuals_GADE <- contingency_table_GADE - expected_counts_GADE
 adjusted_residuals_GADE <- residuals_GADE / sqrt(expected_counts_GADE)
 residuals_df_GADE <- melt(adjusted_residuals_spin)
 
-heatmap_spin <- ggplot(residuals_df_spin, aes(Var1, Var2, fill = value)) +
+heatmap_GADE <- ggplot(residuals_df_spin, aes(Var1, Var2, fill = value)) +
   geom_tile() +
   scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
   labs(title = "GADE and WhyPlay Adjusted Residuals Heatmap", x = "GADE Scale", y = "WhyPlay") +
