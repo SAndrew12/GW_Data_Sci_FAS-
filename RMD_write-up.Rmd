@@ -851,15 +851,9 @@ ggplot(df, aes(x = df$hrs_stream_combined)) +
 
 ```
 
-We can see from the above distributions that the hours spent playing games and watching streams is different for different levels of anxiety. This brings us the question if this difference is significantly different or not. We wil look into this when doing hypothesis tests.
+We can see from the above distributions that the hours spent playing games and watching streams is different for different levels of anxiety. This brings us the question if this difference is significantly different or not. We will look into this when doing hypothesis tests.
 
-
-
-### Hours Converstion of Ordinal
-
-
-
-## Hypothesis Tests (add in any I am missing or change the names if needed. Each test will have a visualization)
+## Hypothesis Tests (ANOVA and Chi-Squared)
 
 For hours spent playing and hours spent streaming, an ANOVA test will be conducted to see if there is a significant difference among the different ordinal categories of hours played and hours spent streaming.
 
@@ -981,152 +975,11 @@ plot(tukey_result_SPIN_Hours)
 
 After performing the post-hoc test, we see that there is a significant difference in the Moderate-Low category of hours played. We can thereby conclude that there truly is no significant difference in the other five categories. 
 
-### GADE and WhyPlay (Chi-Squared)
-
-Null Hypothesis (H₀): Being a functional person in society (measured by GADE) and the reason for playing video games are independent of each other.
-
-Alternate Hypothesis (H₁):  Being a functional person in society and the reason for playing video games are not independent. There is some sort of association between them.
-
-```{r contingency_GADE, include=TRUE}
-# Define the contingency table
-contingency_table_GADE <- table(df$GADE, df$cleaned_whyplay)
-print(contingency_table_GADE)
-
-# Perform the chi-squared test
-chi_squared_test_GADE <- chisq.test(contingency_table_GADE)
-p_GADE_whyplay <- chi_squared_test_GADE$p.value
-
-# Print the result
-chi_squared_test_GADE
-```
-
-```{r GADE_heatmap}
-contingency_melted_GADE <- melt(contingency_table_GADE)
-
-# Plot the heat map for GADE
-ggplot(contingency_melted_GADE, aes(x = Var2, y = Var1, fill = value)) +
-  geom_tile() +
-  scale_fill_gradient(low = "#7FFFD4", high = "#FF7FAA") +
-  labs(title = "Heatmap of Contingency Table for GADE",
-       x = "Reason for Playing",
-       y = "GADE Level") + 
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
-Since p << 0.05 (p = `r format(p_GADE_whyplay, digits = 3)`), we reject the null hypothesis. This means that there is sufficient evidence to suggest an association between being a functional person in society, as measured by GADE, and the reason for playing video games.
-
-### GAD and WhyPlay (Chi-Squared)
-
-Null Hypothesis (H₀): Experiencing symptoms of Generalized Anxiety Disorder and the reason for playing video games are independent of each other.
-
-Alternate Hypothesis (H₁): Experiencing symptoms of Generalized Anxiety Disorder and the reason for playing video games are not independent. There is some sort of association between them.
- 
-```{r contingency_GAD, include=TRUE}
-contingency_table_GAD <- table(df$GAD_ord, df$cleaned_whyplay)
-
-# Print the contingency table
-print(contingency_table_GAD)
-
-chi_squared_test_GAD <- chisq.test(contingency_table_GAD)
-p_GAD_whyplay <- chi_squared_test_GAD$p.value
-
-# Print the results of the Chi-squared test
-chi_squared_test_GAD
-```
-
-```{r GAD_heatmap}
-contingency_melted_GAD <- melt(contingency_table_GAD)
-
-# Plot the heat map for GAD
-ggplot(contingency_melted_GAD, aes(x = Var2, y = Var1, fill = value)) +
-  geom_tile() +
-  scale_fill_gradient(low = "#7FFFD4", high = "#FF7FAA") +
-  labs(title = "Heatmap of Contingency Table for GAD",
-       x = "Reason for Playing",
-       y = "GAD Level") + 
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
-Since p << 0.05 (p = `r format(p_GAD_whyplay, digits = 3)`), we reject the null hypothesis. This means that there is sufficient evidence to suggest an association between experiencing symptoms of Generalized Anxiety Disorder and the reason for playing video games.
-
-### SWL and WhyPlay (Chi-Squared)
-
-Null Hypothesis (H₀): Life satisfaction and the reason for playing video games are independent of each other.
-
-Alternate Hypothesis (H₁): Life satisfaction and the reason for playing video games are not independent. There is some sort of association between them.
- 
-```{r contingency_SWL, include=TRUE}
-contingency_table_SWL <- table(df$SWL_ord, df$cleaned_whyplay)
-
-# Print the contingency table
-print(contingency_table_SWL)
-
-chi_squared_test_SWL <- chisq.test(contingency_table_SWL)
-p_SWL_whyplay <- chi_squared_test_SWL$p.value
-
-# Print the results of the Chi-squared test
-chi_squared_test_SWL
-```
-
-```{r SWL_heatmap}
-contingency_melted_SWL <- melt(contingency_table_SWL)
-
-# Plot the heat map for SWL
-ggplot(contingency_melted_SWL, aes(x = Var2, y = Var1, fill = value)) +
-  geom_tile() +
-  scale_fill_gradient(low = "#7FFFD4", high = "#FF7FAA") +
-  labs(title = "Heatmap of Contingency Table for SWL",
-       x = "Reason for Playing",
-       y = "SWL Level") + 
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
-Since p << 0.05 (p = `r format(p_SWL_whyplay, digits = 3)`), we reject the null hypothesis. This means that there is sufficient evidence to suggest an association between life satisfaction and the reason for playing video games.
-
-### SPIN and WhyPlay (Chi-Squared)
-
-Null Hypothesis (H₀): Experiencing social anxiety or phobias and the reason for playing video games are independent of each other.
-
-Alternate Hypothesis (H₁):  Experiencing social anxiety or phobias and the reason for playing video games are not independent. There is some sort of association between them.
- 
-```{r contingency_SPIN, include=TRUE}
-contingency_table_SPIN <- table(df$SPIN_ord, df$cleaned_whyplay)
-
-# Print the contingency table
-print(contingency_table_SPIN)
-
-chi_squared_test_SPIN <- chisq.test(contingency_table_SPIN)
-p_SPIN_whyplay <- chi_squared_test_SPIN$p.value
-
-# Print the results of the Chi-squared test
-chi_squared_test_SPIN
-```
-
-```{r SPIN_heatmap}
-contingency_melted_SPIN <- melt(contingency_table_SPIN)
-
-# Plot the heat map for SPIN
-ggplot(contingency_melted_SPIN, aes(x = Var2, y = Var1, fill = value)) +
-  geom_tile() +
-  scale_fill_gradient(low = "#7FFFD4", high = "#FF7FAA") +
-  labs(title = "Heatmap of Contingency Table for SPIN",
-       x = "Reason for Playing",
-       y = "SPIN Level") + 
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
-Since p << 0.05 (p = `r format(p_SPIN_whyplay, digits = 3)`), we reject the null hypothesis. This means that there is sufficient evidence to suggest an association between experiencing social anxiety or phobias and the reason for playing video games.
-
-
 ### Inventories and WhyPlay (chi-sqauared)
 
 Based on our theory that the reason why respondents play video games could be an indicators of their mental health, we conducted a chi-squared test of independence against "whyplay" and the inventories. This test determined, with statistical significance, that the "wayplay" and respondents mental healh scores on each of the three inventories are dependent (associated).
 
-```{r contingency, include=TRUE}
+```{r contingency_GAD, include=TRUE}
 contingency_table_gad <- table(df$GAD_ord, df$cleaned_whyplay)
 
 
@@ -1136,7 +989,19 @@ chi_squared_test_gad <- chisq.test(contingency_table_gad)
 chi_squared_test_gad
 ```
 
-```{r contingency3, include=TRUE}
+```{r contingency_GADE_KEEP, include=TRUE}
+# Define the contingency table
+contingency_table_GADE <- table(df$GADE, df$cleaned_whyplay)
+
+# Perform the chi-squared test
+chi_squared_test_GADE <- chisq.test(contingency_table_GADE)
+p_GADE_whyplay <- chi_squared_test_GADE$p.value
+
+# Print the result
+chi_squared_test_GADE
+```
+
+```{r contingency_SWL, include=TRUE}
 contingency_table_swl <- table(df$SWL_ord, df$cleaned_whyplay)
 
 
@@ -1146,7 +1011,7 @@ chi_squared_test_swl <- chisq.test(contingency_table_swl)
 chi_squared_test_swl
 ```
 
-```{r contingency2, include=TRUE}
+```{r contingency_SPIN, include=TRUE}
 contingency_table_spin <- table(df$SPIN_ord, df$cleaned_whyplay)
 
 
@@ -1161,7 +1026,7 @@ In the above chi-sqauared outputs, we see a p-value of 0.00000000000000002. This
 
 The following post-hoc test calculates the adjusted residuals, which in effect are the difference between the expected and actual output. 
 
-``` {r, posthoc}
+``` {r, posthoc_GAD}
 expected_counts <- chisq.test(contingency_table_gad)$expected
 
 # Calculate residuals
@@ -1183,15 +1048,33 @@ ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
   labs(title = "GAD and WhyPlay Adjusted Residuals Heatmap", x = "GAD Scale", y = "WhyPlay") +
   theme_minimal()+
   theme(plot.title = element_text(hjust = 0.5))
-
-
-#contingency_df <- as.data.frame(contingency_table_gad)
-
-
 ```
 
+``` {r, posthoc_GADE}
+expected_counts <- chisq.test(contingency_table_GADE)$expected
 
-``` {r, posthoc3}
+# Calculate residuals
+residuals <- contingency_table_GADE - expected_counts
+
+# Calculate adjusted residuals
+adjusted_residuals <- residuals / sqrt(expected_counts)
+
+# Print adjusted residuals
+print(adjusted_residuals)
+
+
+residuals_df <- melt(adjusted_residuals)
+
+# Create a heatmap
+ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "GADE and WhyPlay Adjusted Residuals Heatmap", x = "GADE Scale", y = "WhyPlay") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+``` {r, posthoc_SWL}
 expected_counts <- chisq.test(contingency_table_swl)$expected
 
 # Calculate residuals
@@ -1211,19 +1094,15 @@ residuals_df <- melt(adjusted_residuals)
 ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
   geom_tile() +
   scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-  labs(title = "SWL and WhyPlay Adjusted Residuals Heatmap", x = "SWL SCale", y = "WhyPlay") +
+  labs(title = "SWL and WhyPlay Adjusted Residuals Heatmap", x = "SWL Scale", y = "WhyPlay") +
   theme_minimal()+
   theme(
     plot.title = element_text(hjust = 0.5),
     axis.text.x = element_text(angle = 45, hjust = 1)
   )
-
-#contingency_df <- as.data.frame(contingency_table_swl)
-
-
 ```
 
-``` {r, posthoc2}
+``` {r, posthoc_SPIN}
 expected_counts <- chisq.test(contingency_table_spin)$expected
 
 # Calculate residuals
@@ -1245,60 +1124,6 @@ ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
   labs(title = "SPIN and WhyPlay Adjusted Residuals Heatmap", x = "SPIN Scale", y = "WhyPlay") +
   theme_minimal()+
   theme(plot.title = element_text(hjust = 0.5))
-
-
-#contingency_df <- as.data.frame(contingency_table_spin)
-
-
-```
-
-```{r, posthoc_all, fig.width=17}
-
-# GAD heatmap
-expected_counts_gad <- chisq.test(contingency_table_gad)$expected
-residuals_gad <- contingency_table_gad - expected_counts_gad
-adjusted_residuals_gad <- residuals_gad / sqrt(expected_counts_gad)
-residuals_df_gad <- melt(adjusted_residuals_gad)
-
-heatmap_gad <- ggplot(residuals_df_gad, aes(Var1, Var2, fill = value)) +
-  geom_tile() +
-  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-  labs(title = "GAD and WhyPlay Adjusted Residuals Heatmap", x = "GAD Scale", y = "WhyPlay") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-
-# SWL heatmap
-expected_counts_swl <- chisq.test(contingency_table_swl)$expected
-residuals_swl <- contingency_table_swl - expected_counts_swl
-adjusted_residuals_swl <- residuals_swl / sqrt(expected_counts_swl)
-residuals_df_swl <- melt(adjusted_residuals_swl)
-
-heatmap_swl <- ggplot(residuals_df_swl, aes(Var1, Var2, fill = value)) +
-  geom_tile() +
-  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-  labs(title = "SWL and WhyPlay Adjusted Residuals Heatmap", x = "SWL Scale", y = "WhyPlay") +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
-
-# SPIN heatmap
-expected_counts_spin <- chisq.test(contingency_table_spin)$expected
-residuals_spin <- contingency_table_spin - expected_counts_spin
-adjusted_residuals_spin <- residuals_spin / sqrt(expected_counts_spin)
-residuals_df_spin <- melt(adjusted_residuals_spin)
-
-heatmap_spin <- ggplot(residuals_df_spin, aes(Var1, Var2, fill = value)) +
-  geom_tile() +
-  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-  labs(title = "SPIN and WhyPlay Adjusted Residuals Heatmap", x = "SPIN Scale", y = "WhyPlay") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-
-# Combine the heatmaps side by side
-combined_heatmaps <- heatmap_gad + heatmap_swl + heatmap_spin
-combined_heatmaps + plot_layout(ncol = 3)
 ```
 
 ### ANOVA test for Total time spent and GAD_ordinal variables
@@ -1432,12 +1257,11 @@ ggplot(df, aes(x = SPIN_ord, fill = cleaned_whyplay)) +
 explain
 
 
-## Reccomednations 
+## Recommednations 
 
 Here we will state what we think should be done next (project part 2)
 
-"We reccomedn running a logisitic regression blah blah blah" 
-
+"We recommend running a logisitic regression blah blah blah" 
 
 
 
