@@ -10,6 +10,8 @@ output:
     toc: yes
     toc_depth: 3
     toc_float: yes
+bibliography: citations.bib
+csl: "apa.csl"
 ---
 
 ```{r init, include=F}
@@ -48,7 +50,7 @@ Does a person’s video game habits, seen in hours spent playing and streaming, 
 
 ### The Data
 
-This data set (https://www.kaggle.com/datasets/divyansh22/online-gaming-anxiety-data/data) surveyed 13,464 gamers and had them answer questions not only about time spent playing video games, but it also asked questions that are typically seen in psychological diagnosis tests approved in the Diagnostic and Statistical Manual of Mental Disorders (DSM). Please note that the terms gamers and surveyors will be used interchangeably in this report.
+This data set (https://www.kaggle.com/datasets/divyansh22/online-gaming-anxiety-data/data) surveyed 13,464 gamers and had them answer questions not only about time spent playing video games, but it also asked questions that are typically seen in psychological diagnosis tests approved in the Diagnostic and Statistical Manual of Mental Disorders (DSM) [@marian_sauter_gaming_2017]. Please note that the terms gamers and surveyors will be used interchangeably in this report.
 
 ### Mental Health Inventories and Predictors 
 
@@ -243,7 +245,7 @@ For SPIN, the data is slightly less skewed; we see that the most frequent score 
 
 ### Standarized Metrics for Psychological Inventories
 
-Immediately we see that the total scores for all the psychological inventories need to be standardized into their respective categories of minimal and severe. Once the conversion of raw scores into ordinal values is complete, we can get a better representation of how each psychological inventory affects gamers.
+Immediately we see that the total scores for all the psychological inventories need to be standardized into their respective categories of minimal and severe. Once the conversion of raw scores into ordinal values is complete, we can get a better representation of how each psychological inventory affects gamers. The conversion is based on some research articles [@greenspace_mental_health_social_2020; @yun_satisfaction_2019; @sapra_using_2020].
 
 ``` {r, ord}
 # Function to convert GAD_T to ordinal variable
@@ -1253,10 +1255,12 @@ The results suggest that individuals with higher levels of GAD (severe and moder
 
 ## Keys Findings 
 
-Hours spent playing video games and hours spent streaming: there is no significant difference across all ordinal categories. GAD and hours played: a person is more likely to experience symptoms of generalized anxiety if the hours they spend playing video games is anywhere from low to moderate, low to high, or moderate to high. SWL and hours played:  satisfaction with life is significantly affected if video games are played within the low to moderate range. SPIN and hours played: a person is more likely to experience social anxiety or phobias if they play video games anywhere within the low to moderate range. For all the inventories, along with GADE, and the reason for playing video games, there is some level of dependency among them.
+Hours spent playing video games and hours spent streaming: there is no significant difference across all ordinal categories. GAD and hours played: a person is more likely to experience symptoms of generalized anxiety if the hours they spend playing video games is anywhere from low to moderate, low to high, or moderate to high. SWL and hours played:  satisfaction with life is significantly affected if video games are played within the low to moderate range. SPIN and hours played: a person is more likely to experience social anxiety or phobias if they play video games anywhere within the low to moderate range. For all the inventories, along with GADE, and the reason for playing video games, there is some level of dependency among them. ANOVA test for Total time spent and GAD_ordinal variables: People with different levels of GAD actually spend significantly different amounts of time on gaming and streaming.
 
 
 ## Recommendations 
 
 To improve on our current work and findings, we could apply regression techniques, linear or logistic, to predict outcomes of time spent playing or streaming video games based on the current psychological inventories we have analyzed at length.
+
+## References
 
