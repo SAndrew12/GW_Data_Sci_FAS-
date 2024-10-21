@@ -2990,26 +2990,48 @@ not statistically significant.</p>
 </div>
 </div>
 </div>
-<div id="keys-findings" class="section level2">
-<h2>Keys Findings</h2>
-<p>Hours spent playing video games and hours spent streaming: there is
-no significant difference across all ordinal categories. GAD and hours
-played: a person is more likely to experience symptoms of generalized
-anxiety if the hours they spend playing video games is anywhere from low
-to moderate, low to high, or moderate to high. SWL and hours played:
-satisfaction with life is significantly affected if video games are
-played within the low to moderate range. SPIN and hours played: a person
-is more likely to experience social anxiety or phobias if they play
-video games anywhere within the low to moderate range. For all the
-inventories, along with GADE, and the reason for playing video games,
-there is some level of dependency among them.</p>
+<div id="key-findings" class="section level2">
+<h2>Key Findings</h2>
+<p>Team 5’s analysis reveals significant relationships between video
+game habits and mental health outcomes. First, increasing hours spent
+playing video games and streaming is associated with higher stream
+counts, as indicated by significant ANOVA results across all
+comparisons. This suggests that gamers who spend more hours playing are
+more likely to be heavily involved in the gaming community, leading to
+increased streaming activity.</p>
+<p>In examining the impact of anxiety levels on gaming behavior, we
+found that individuals with Very High anxiety levels engage in
+significantly more streaming hours compared to those with Low, Moderate,
+and High anxiety. Conversely, higher levels of gaming hours negatively
+affect subjective well-being (SWL_T), with significant declines observed
+at Very High hours played.</p>
+<p>Additionally, SPIN_T scores significantly increase from Low to Very
+High levels of gaming, indicating that greater gaming engagement
+correlates with heightened psychological distress.</p>
+<p>Lastly, our chi-squared analysis shows that respondents who play
+video games for enjoyment report better mental health outcomes than
+those motivated by competition or escapism.</p>
+<p>As causality cannot be determined, Team 5 caveats this analysis by
+adding that pre-exiting mental health conditions and other life
+stressors could be a contributing factor to negative mental health
+outcomes. However, a correlative effect is clearly seen as exposed by
+the ANOVA and Chi-Sqaured tests we conducted.</p>
 </div>
 <div id="recommendations" class="section level2">
 <h2>Recommendations</h2>
-<p>To improve on our current work and findings, we could apply
-regression techniques, linear or logistic, to predict outcomes of time
-spent playing or streaming video games based on the current
-psychological inventories we have analyzed at length.</p>
+<p>Team 5 recommends passing our findings to social scientists to adjust
+the survey instruments. Collecting more comprehensive demographic
+information would be invaluable, including factors such as respondents’
+socioeconomic status (e.g., ability to afford the cost of living),
+family history of mental health diagnoses, and other relevant contextual
+data. This information could help identify potential confounding
+variables and provide deeper insights into the relationships we
+observed.</p>
+<p>Given the non-normality of the inventory scores, we also recommend
+conducting logistic regression to observe the interaction of multiple
+predictors against the outcomes (inventory scores). Adding this layer of
+complexity would allow us to more effectively model how gaming habits
+affect mental health outcomes in gamers.</p>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2 class="unnumbered">References</h2>
@@ -3083,7 +3105,7 @@ $(document).ready(function () {
 <!-- code folding -->
 <script>
 $(document).ready(function () {
-  window.initializeCodeFolding("show" === "show");
+  window.initializeCodeFolding("hide" === "show");
 });
 </script>
 
