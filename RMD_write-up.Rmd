@@ -1253,7 +1253,7 @@ plot(tukey_result)
 
 The results suggest that individuals with higher levels of GAD (severe and moderate) tend to spend more combined hours on gaming and streaming compared to those with minimal anxiety. However, the difference between some intermediate levels (e.g., moderate vs. mild) is not statistically significant.
 
-## Key Findings 
+## <u>Key Findings</u> 
 
 Team 5's analysis reveals significant relationships between video game habits and mental health outcomes. First, increasing hours spent playing video games and streaming is associated with higher stream counts, as indicated by significant ANOVA results across all comparisons. This suggests that gamers who spend more hours playing are more likely to be heavily involved in the gaming community, leading to increased streaming activity.
 
@@ -1265,11 +1265,11 @@ Lastly, our chi-squared analysis shows that respondents who play video games for
 
 As causality cannot be determined, Team 5 caveats this analysis by adding that pre-exiting mental health conditions and other life stressors could be a contributing factor to negative mental health outcomes. However, a correlative effect is clearly seen as exposed by the ANOVA and Chi-Sqaured tests we conducted. 
 
-## Recommendations 
+## <u>Recommendations</U>
 
 Team 5 recommends passing our findings to social scientists to adjust the survey instruments. Collecting more comprehensive demographic information would be invaluable, including factors such as respondents' socioeconomic status (e.g., ability to afford the cost of living), family history of mental health diagnoses, and other relevant contextual data. This information could help identify potential confounding variables and provide deeper insights into the relationships we observed.
 
 Given the non-normality of the inventory scores, we also recommend conducting logistic regression to observe the interaction of multiple predictors against the outcomes (inventory scores). Adding this layer of complexity would allow us to more effectively model how gaming habits affect mental health outcomes in gamers. 
 
-## References
+## <u>References</u>
 
