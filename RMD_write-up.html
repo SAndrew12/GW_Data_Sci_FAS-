@@ -11,7 +11,7 @@
 
 <meta name="author" content="Team 5 – DATS 6101" />
 
-<meta name="date" content="2024-10-20" />
+<meta name="date" content="2024-10-21" />
 
 <title>Mental Health Outcomes in Gamers</title>
 
@@ -1398,6 +1398,29 @@ if (window.hljs) {
 
 
 
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+margin-bottom: 0em;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
 
 
 
@@ -1569,7 +1592,7 @@ border-radius: 0px;
 
 <h1 class="title toc-ignore">Mental Health Outcomes in Gamers</h1>
 <h4 class="author">Team 5 – DATS 6101</h4>
-<h4 class="date">2024-10-20</h4>
+<h4 class="date">2024-10-21</h4>
 
 </div>
 
@@ -1592,9 +1615,9 @@ streaming, affect their mental health?</p>
 surveyed 13,464 gamers and had them answer questions not only about time
 spent playing video games, but it also asked questions that are
 typically seen in psychological diagnosis tests approved in the
-Diagnostic and Statistical Manual of Mental Disorders (DSM). Please note
-that the terms gamers and surveyors will be used interchangeably in this
-report.</p>
+Diagnostic and Statistical Manual of Mental Disorders (DSM) <span class="citation">(Marian Sauter &amp; Dejan Draschkow, 2017)</span>.
+Please note that the terms gamers and surveyors will be used
+interchangeably in this report.</p>
 </div>
 <div id="mental-health-inventories-and-predictors" class="section level3">
 <h3>Mental Health Inventories and Predictors</h3>
@@ -1801,7 +1824,9 @@ social anxieties and phobias.</p>
 inventories need to be standardized into their respective categories of
 minimal and severe. Once the conversion of raw scores into ordinal
 values is complete, we can get a better representation of how each
-psychological inventory affects gamers.</p>
+psychological inventory affects gamers. The conversion is based on some
+research articles <span class="citation">(Greenspace Mental Health,
+2020; Sapra et al., 2020; Yun et al., 2019)</span>.</p>
 <pre class="r"><code># Function to convert GAD_T to ordinal variable
 convert_GAD &lt;- function(score) {
   if (is.na(score)) return(NA)  # Handle NA values
@@ -2985,6 +3010,40 @@ there is some level of dependency among them.</p>
 regression techniques, linear or logistic, to predict outcomes of time
 spent playing or streaming video games based on the current
 psychological inventories we have analyzed at length.</p>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2 class="unnumbered">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0" line-spacing="2">
+<div id="ref-greenspace_mental_health_social_2020" class="csl-entry">
+Greenspace Mental Health. (2020). <em>Social <span>Anxiety</span>
+<span></span> <span>SPIN</span> <span></span> <span>Greenspace</span>
+(<span>US</span>)</em>. <a href="https://greenspacehealth.com/en-us/social-anxiety-spin/">https://greenspacehealth.com/en-us/social-anxiety-spin/</a>
+</div>
+<div id="ref-marian_sauter_gaming_2017" class="csl-entry">
+Marian Sauter, &amp; Dejan Draschkow. (2017). <em>Gaming
+<span>Habits</span> and <span>Psychological</span>
+<span>Well</span>-being: <span>An</span> international dataset about the
+<span>Anxiety</span>, <span>Life</span> <span>Satisfaction</span> and
+<span>Social</span> <span>Phobia</span> of over 13000 gamers</em>. <a href="https://osf.io/vnbxk/">https://osf.io/vnbxk/</a>
+</div>
+<div id="ref-sapra_using_2020" class="csl-entry">
+Sapra, A., Bhandari, P., Sharma, S., Chanpura, T., &amp; Lopp, L.
+(2020). Using <span>Generalized</span> <span>Anxiety</span>
+<span>Disorder</span>-2 (<span>GAD</span>-2) and <span>GAD</span>-7 in a
+<span>Primary</span> <span>Care</span> <span>Setting</span>.
+<em>Cureus</em>, <em>12</em>(5), e8224. <a href="https://doi.org/10.7759/cureus.8224">https://doi.org/10.7759/cureus.8224</a>
+</div>
+<div id="ref-yun_satisfaction_2019" class="csl-entry">
+Yun, Y. H., Rhee, Y. E., Kang, E., &amp; Sim, J. (2019). The
+<span>Satisfaction</span> with <span>Life</span> <span>Scale</span> and
+the <span>Subjective</span> <span>Well</span>-<span>Being</span>
+<span>Inventory</span> in the <span>General</span> <span>Korean</span>
+<span>Population</span>: <span>Psychometric</span>
+<span>Properties</span> and <span>Normative</span> <span>Data</span>.
+<em>International Journal of Environmental Research and Public
+Health</em>, <em>16</em>(9), 1538. <a href="https://doi.org/10.3390/ijerph16091538">https://doi.org/10.3390/ijerph16091538</a>
+</div>
+</div>
 </div>
 
 
