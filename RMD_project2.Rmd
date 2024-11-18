@@ -26,6 +26,7 @@ library(kableExtra)
 library(reshape2)
 library(gridExtra)
 library(patchwork)
+library(randomForest)
 ```
 
 
@@ -1272,4 +1273,58 @@ Team 5 recommends passing our findings to social scientists to adjust the survey
 Given the non-normality of the inventory scores, we also recommend conducting logistic regression to observe the interaction of multiple predictors against the outcomes (inventory scores). Adding this layer of complexity would allow us to more effectively model how gaming habits affect mental health outcomes in gamers. 
 
 ## <u>References</u>
+
+
+
+## <u>Tree Based</u>
+```{r, trees}
+ 
+str(df)
+```
+ 
+``` {r, randomforest}
+df <- df[complete.cases(df$GAD_ord, df$cleaned_whyplay, df$hrs_stream_combined, df$Game,df$Platform, df$earning, df$Gender, df$Age, df$Work,df$Residence), ]
+
+
+
+#Random Forest does not allow chr, they have to be factors
+df$cleaned_whyplay <- factor(df$cleaned_whyplay)
+df$Game <- factor(df$Game)
+df$Gender <- factor(df$Gender)
+df$GAD_ord <- factor(as.character(df$GAD_ord))
+
+
+# Train Random Forest models with different numbers of trees
+
+
+model_rf_100 <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
+                             data = df, 
+                             ntree = 100)
+
+model_rf_200 <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
+                             data = df, 
+                             ntree = 200)
+
+model_rf_500 <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
+                             data = df, 
+                             ntree = 500)
+
+model_rf_1000 <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
+                             data = df, 
+                             ntree = 1000)
+
+# Print out accuracy for each model
+cat("Accuracy with 100 trees: ", mean(predict(model_rf_100) == df$GAD_ord), "\n")
+cat("Accuracy with 200 trees: ", mean(predict(model_rf_200) == df$GAD_ord), "\n")
+cat("Accuracy with 500 trees: ", mean(predict(model_rf_500) == df$GAD_ord), "\n")
+cat("Accuracy with 1000 trees: ", mean(predict(model_rf_1000) == df$GAD_ord), "\n")
+
+print(model_rf_100)
+print(model_rf_200)
+print(model_rf_500)
+print(model_rf_1000)
+```
+
+
+
 
