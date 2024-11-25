@@ -1,6 +1,6 @@
 ---
 title: "Mental Health Outcomes in Gamers"
-author: "Team 5 -- DATS 6101"
+author: "Team 5 (Stephen Davanzo, Fyrooz Anika Khan, Anith Muthalaly) -- DATS 6101"
 # date: "today"
 date: "`r Sys.Date()`"
 output:
@@ -10,8 +10,8 @@ output:
     toc: yes
     toc_depth: 3
     toc_float: yes
-bibliography: citations.bib
-csl: "apa.csl"
+bibliography: "C:/citations.bib"
+csl: "C:/apa.csl"
 ---
 
 ```{r init, include=F}
@@ -26,7 +26,7 @@ library(kableExtra)
 library(reshape2)
 library(gridExtra)
 library(patchwork)
-library(randomForest)
+library(broom)
 ```
 
 
@@ -38,7 +38,7 @@ options(scientific=T, digits = 3)
 ```
 
 ```{r read-in, include=TRUE}
-df <- read.csv("GamingStudy_data.csv")
+df <- read.csv("G:\\My Drive\\Flash Drive Contents\\E\\Graduate School\\The George Washington University\\Data Science\\DATS 6101_12 (Morris)\\GW_Data_Sci_FAS-\\writeup_branch\\GamingStudy_data.csv")
 ```
 
 
@@ -80,17 +80,17 @@ This is the list of mental health predictors.
 6. Game Played: the selected game surveyors play the most
 
 
-## <u>Exploratory Data Analysis</u>
+## <u>Exploratory Data Analysis (EDA)</u>
 
 In order to start answering our research question, we need to examine our data. This will include investigating demographic data, psychological inventory scores, and ensuring standardized metrics for times and reasoning.
 
 ### Assumption of Continuity
 
-In our EDA, we noticed that the data for the psychological inventories was not truly continuous. This was made apparent when attempting logarithmic and scale transformations. However, due to the level of difficulty this course is expecting us to perservere, we are assuming normality for all variables.
+In our EDA, we noticed that the data for the psychological inventories was not truly continuous. This was made apparent when attempting logarithmic and scale transformations. However, due to the level of difficulty this course is expecting us to master, we are assuming normality for all variables.
 
 ### Demographics
 
-First, we need to examine the demographics of surveyors. Since we have age, gender, country of residence, and game played, let's see what we can find out.
+First, we need to examine the demographics of the surveyors. Since we have age, gender, country of residence, and game played, we will perform EDA on these variables.
 
 ``` {r, age}
 age_counts <- as.data.frame(table(df$Age))
@@ -135,7 +135,7 @@ fig <- ggplot(gender_counts, aes(x = reorder(Gender, -SurveyCount), y = SurveyCo
 print(fig)
 ```
 
-The respondents/surveyors are almost entirely males. This is another, significant right-skewed variable.
+The surveyors are almost entirely male. This is another, significant right-skewed variable.
 
 ``` {r, countryplot}
 Residence_counts <- as.data.frame(table(df$Residence))
@@ -216,7 +216,7 @@ ggplot(df, aes(x = GADE)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-For GADE, there are a lot of surveyors that have indicated they can function "appropriately" in society, shown in the 'Not difficult at all' bar. This means that the effect generalized anxiety may have in their life is extremely minimal. The data here is very right-skewed, as with the other variables where EDA has been performed.
+For GADE, several respondents have indicated that they can function well in society, suggesting that the impact of generalized anxiety on their daily life is minimal. The data, similar to other variables analyzed in the EDA, is highly right-skewed.
 
 ```{r, swl_dist}
 ggplot(data = df, aes(x = SWL_T)) +
@@ -246,7 +246,7 @@ For SPIN, the data is slightly less skewed; we see that the most frequent score 
 
 ### Standarized Metrics for Psychological Inventories
 
-Immediately we see that the total scores for all the psychological inventories need to be standardized into their respective categories of minimal and severe. Once the conversion of raw scores into ordinal values is complete, we can get a better representation of how each psychological inventory affects gamers. The conversion is based on some research articles [@greenspace_mental_health_social_2020; @yun_satisfaction_2019; @sapra_using_2020].
+Immediately we see that the total scores for all the psychological inventories need to be standardized into their respective categories, ranging from minimal to severe. Once the conversion of raw scores into ordinal values is complete, we gain a better understanding of how each psychological inventory affects gamers. The conversion is based on some research articles [@greenspace_mental_health_social_2020; @yun_satisfaction_2019; @sapra_using_2020].
 
 ``` {r, ord}
 # Function to convert GAD_T to ordinal variable
@@ -373,7 +373,7 @@ ggplot(df, aes(x = SWL_ord)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-SPIN is interestingly bi-modal, with 'Slightly satisfied' and 'Slightly dissatisfied' being the most common selections chosen.
+SWL is interestingly bi-modal, with 'Slightly satisfied' and 'Slightly dissatisfied' being the most common selections chosen.
 
 ```{r SPIN_ord_dist}
 ggplot(df, aes(x = SPIN_ord)) +
@@ -389,7 +389,7 @@ SPIN is right-skewed, where most gamers indicated they experience no social anxi
 
 ### Reason for playing
 
-When looking at all of this data, a crucial component is the reason why gamers play video games in the first place. Since this field was a free-response, it would be impossible, and unwise, to display a histogram of every possible response received. In order to show meaningful results, we will use regular expressions to isolate key words in the responses and categorize them under a specific group.
+When looking at all of this data, a crucial component is the reason why gamers play video games in the first place. Since this field was a free-response, it would be impossible, and unwise, to display a histogram of every possible response received. In order to show meaningful results, we will utilize regular expressions to isolate key words in the responses and categorize them within specific groups.
 
 ``` {r, cleaningwhyplay}
 clean_responses <- function(response) {
@@ -534,11 +534,11 @@ print(fig_hours)
 
 ```
 
-We see that the data sure has anomaly because it's impossible to have 8000 hours in a week! So in order to use this variable, such extreme values need to be removed.
+We see that the data sure has anomalies because it's impossible to have 8000 hours in a week. Therefore, in order to use this variable, these extreme values, or outliers, need to be removed.
 
-### Removing outliers in Hours and generating Q-Q plot, histogram and boxplot
+### Removing Outliers in Hours
 
-We now use a function to remove the extreme values from Hours played variable and generate QQ-plot, histogram and boxplot and check the data distribution again.
+We will use the outlierKD2 function to remove the extreme values from the Hours played variable. Once that is completed, we generate a QQ-plot, histogram, and box plot before reexamining the data distribution.
 
 ```{r}
 # Define the outlierKD2 function
@@ -626,13 +626,11 @@ ggplot(hrs_GAD_filtered_clean, aes(x = Hours)) +
 
 ```
 
-After cleaning the Hours played variable, the Q-Q plot suggests that the center of the data could be more or less normally distributed, but the tails have more or fewer outliers. The histogram confirms that as we can see most frequent values are in the middle portion of the data. The wide shape of the boxplot confirms that the data is widely spread out and the median being close to the upper end indicates that the data is slightly left-skewed.  
+After cleaning the Hours played variable, the Q-Q plot suggests that the center of the data could be more or less normally distributed, but the tails have more or fewer outliers. The histogram confirms that as we can see most frequent values are in the middle portion of the data. The wide shape of the box plot confirms that the data is widely spread out and the median being close to the upper end indicates that the data is slightly left-skewed.  
 
-
-### Streams
 ### Identifying outliers in Streams
 
-We also need to explore the variable streams to know the time spent on watching Streams, Tournaments, etc. (per week) which could have relation on a person's health. We generate a histogram to see its distribution.
+We also need to explore the variable streams to know how much time is spent watching people play video games (streams, tournaments, etc.) per week, which could affect a person's health. We generate a histogram to see its distribution.
 
 ```{r}
 ggplot(df, aes(x = streams)) + 
@@ -649,8 +647,7 @@ ggplot(df, aes(x = streams)) +
 
 ```
 
-It is evident from the plot above that similar to the data of time spent on playing online games, the time spent on watching streams per week also has anomalies. We proceed to remove these extreme values in the next step.
-
+It is evident from the plot above that similar to the data of time spent on playing video games, the time spent on watching streams per week also has anomalies. We proceed to remove these extreme values in the next step.
 
 ### Removing outliers in Streams and generating Q-Q plot, histogram and boxplot
 
@@ -729,13 +726,11 @@ ggplot(df_clean, aes(x = streams)) +
 
 ```
 
-Even after removing the outliers, we find the data to be not normally distributed (as seen in the Q-Q plot). The histogram confirms this as we find more data towards the lower tail compared to the upper tail. The long length of the whisker of the boxplot confirms this as well.
-
+Even after removing the outliers, we find the data will not normally distributed, as seen in the Q-Q plot. The histogram confirms this, as we find more data towards the lower tail compared to the upper tail. The long length of the box and whisker plot confirms this as well.
 
 ### Hours and Streams (Pearson's Correlation)
 
-We now conduct the Pearson's correlation test to measure the strength and direction of the linear relationship between Hours spent gaming and Hours spent watching streams:
-
+We can now conduct a Pearson's correlation test to measure the strength and direction of the linear relationship between Hours spent gaming and Hours spent watching streams:
 
 ```{r, corr_h_s}
 cor_test <- cor.test(hrs_GAD_filtered_clean$Hours, df_clean$streams)
@@ -743,12 +738,11 @@ correlation_result_Hours_Streams <- cor(hrs_GAD_filtered_clean$Hours, df_clean$s
 cor_test
 ```
 
-The Correlation coefficient value (0.0844) indicates a weak positive linear relationship between the two variables, Hours and Streams. Since the correlation is close to 0, the relationship is not strong, meaning that as Hours (time spent gaming) increases, the time spent streaming (or vice versa) increases slightly, but not in a very consistent or strong way.
+We receive a correlation coefficient value of 0.0844. This indicates a weak, positive, linear relationship between the two variables: Hours and Streams. Since the correlation is close to 0, the relationship is weak. This means that as Hours, or time spent gaming increases, the time spent streaming increases slightly. Similarly, the inverse is also suggested.
 
 ### Standardizing Hours and Streams cleaned data
 
-Now since the data of both the time spent on playing games and watching streams and tournaments are not normally distributed, we try to standardize these data in order to proceed with the tests that assume normality.
-
+Now since the data of both the time spent on playing games and watching streams and tournaments are not normally distributed, we try to standardize them in order to proceed with the tests that assume normality.
 
 ``` {r}
 df_clean$streams_Stand <- scale(df_clean$streams)
@@ -758,7 +752,7 @@ hrs_GAD_filtered_clean$hours_Stand <- scale(hrs_GAD_filtered_clean$Hours)
 
 ### Hours spent gaming Q-Q plot and histogram with Standardized values
 
-We generate Q-Q plot and histogram with the Standardized values expecting to get a normal distribution:
+We generate a Q-Q plot and histogram with the standardized values, expecting to get a normal distribution.
 
 ```{r, plotting_hours}
 
@@ -775,11 +769,11 @@ ggplot(data = hrs_GAD_filtered_clean, aes(x = hours_Stand)) +
 
 ```
 
-As seen from the plots above the data now look near to normal and smoother. Now, we look into the time spent watching streams variable. 
+As seen from the plots above, the data now looks closer to being normalized and smoother. Now we can look into the time spent watching streams variable. 
 
 ### Streaming Q-Q plot and histogram with Standardized values
 
-We generate Q-Q plot and histogram again expecting to get a bell-shaped histogram from the standardized values of the cleaned stream dataset:
+We generate a Q-Q plot and histogram again, expecting to get a bell-shaped histogram from the standardized values of the cleaned stream variable.
 
 ``` {r, plotting_streams}
 
@@ -796,11 +790,11 @@ ggplot(data = df_clean, aes(x = streams_Stand)) +
 
 ```
 
-Even after standardizing the streaming time values, the plots depict that the standardized values are not yet normal. Both the plots confirm that the data is more concentrated towards the left side.
+Even after standardizing the streaming time values, the plots show that the standardized values are not normalized. Both the plots confirm that the data is more concentrated towards the left side.
 
 ### Adding Hours and Streams -> Total Time, and creating histogram and QQ-plot
 
-Previously, We have seen from the Pearson correlation test that there exists a very weak positive correlation when we tried to find a relation between hours and streams variables (which are free of outliers) and the both the variables not normally distributed (even after standardization). So now we tried to combine the two time variables and try to see if the combined data can be used for further analysis.
+Previously, We have seen from the Pearson correlation test that there exists a very weak, positive correlation when we tried to find a relationship between the hours and streams variables, which are free of outliers. Even though both variables are not normally distributed, despite standardization efforts, we now try to combine the two variables to see if the summations can be used for further analysis.
 
 ```{r}
 
@@ -827,11 +821,11 @@ ggplot(data = df, aes(x = hrs_stream_combined)) +
 
 ```
 
-We can clearly see from the generated Q-Q plot and histogram that the combined data called (now called Total time spent on watching streaming and playing games) has now look near to normal. This data is now suitable to conduct all kinds of tests that require normality of data.
+We can clearly see from the generated Q-Q plot and histogram that the combined data, now called "Total time spent on watching streaming and playing games", looks close to completely normal. This data is now suitable to conduct all kinds of tests that require normality of data.
 
 ### Histogram of Total Time distribution on GAD_ordinal variables
 
-We now try to see the distribution of total time spent on playing games and streaming based on GAD ordinal classification (minimal/ mild/ moderate/ severe levels of anxiety). 
+We now attempt to see the distribution of total time spent on playing games and streaming based on the GAD ordinal classification: minimal/ mild/ moderate/ severe levels of anxiety. 
 
 ```{r}
 ggplot(df, aes(x = df$hrs_stream_combined)) +
@@ -850,7 +844,7 @@ ggplot(df, aes(x = df$hrs_stream_combined)) +
 
 ```
 
-We can see from the above distributions that the hours spent playing games and watching streams is different for different levels of anxiety. This brings us the question if this difference is significantly different or not. We will look into this when doing hypothesis tests.
+We can see from the above distributions that the hours spent playing games and watching streams is different for the distinct levels of anxiety. This brings to question if this difference is significantly different or not. We will look into this when doing hypothesis tests.
 
 ## <u>Hypothesis Tests</u> 
 
@@ -886,7 +880,7 @@ print(tukey_result_Hours_Streams)
 plot(tukey_result_Hours_Streams)
 ```
 
-After performing the post-hoc test, we see that actually there is no significant difference in hours spent streaming and hours spent playing, across all categories.
+After performing the post-hoc test, we see that there is no actual or significant difference in hours spent streaming and hours spent playing, across all categories.
 
 ### GAD and Hours Played (ANOVA)
 
@@ -1049,7 +1043,7 @@ ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-The GAD vs "whyplay" heatmap clearly shows  that "having fun" is most closely associated "minimal anxiety", while "winning" and "escape" are more associated "moderate" and "severe" anxiety.
+The GAD vs "whyplay" heat map clearly shows  that "having fun" is most closely associated "minimal anxiety", while "winning" and "escape" are more associated "moderate" and "severe" anxiety.
 
 ```{r GAD_ord vs why_play2}
 
@@ -1100,7 +1094,7 @@ ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-This heatmap showing the residuals for GADE and "whyplay" tell a similar story to that of GAD. "having fun" is highly associated to positive mental health, in the context of anxiety disorders. "winning" and "escaping" as declared reasons why the respondents play video games once again are associated with negative outcomes. Though, "escaping"s affect is considerable higher.
+This heat map showing the residuals for GADE and "whyplay" tell a similar story to that of GAD. "having fun" is highly associated to positive mental health, in the context of anxiety disorders. "winning" and "escaping" as declared reasons why the respondents play video games, once again, are associated with negative outcomes, though the affect of "escaping" is considerably higher.
 
 ```{r}
 ggplot(df, aes(x = GADE, fill = cleaned_whyplay)) +
@@ -1155,7 +1149,7 @@ ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
   )
 ```
 
-The heatmap above for SWL vs "whyplay" shows that, again, "having fun" is most strongly associated with positive outcomes, satisfaction with life in this case. The response "escape" and "winning" are highly associated with respondents who are extreme dissatisfied in life. 
+The heat map above for SWL vs "whyplay" shows that, again, "having fun" is most strongly associated with positive outcomes, which in this case is satisfaction with life. The response "escape" and "winning" are highly associated with respondents who are extremely dissatisfied with their life. 
 
 #### SPIN vs "whyplay"
 
@@ -1228,14 +1222,13 @@ summary(anova_result_combined)
 
 ```
 
-The p-value from the test is very small (2.1e-07), which is much smaller than the common threshold of 0.05. Because the p-value is so small, we can confidently say that the difference in time spent gaming and streaming is not just due to random chance. This means that people with different levels of GAD do indeed spend significantly different amounts of time on gaming and streaming.
+The p-value from the test is very small, 2.1e-07, which is much smaller than the common threshold of 0.05. Because the p-value is so small, we can confidently say that the difference in time spent gaming and streaming is not just due to random chance. This means that people with different levels of GAD do indeed spend significantly different amounts of time on gaming and streaming.
 
-So, at least one group (for example, those with mild anxiety) spends a different amount of time gaming and streaming compared to another group (for example, those with severe anxiety). Next yo understand which specific groups are different, we want to conduct post-hoc tests (like Tukey's HSD) to compare the means between each pair of GAD levels.
+At least one group, for example: those with mild anxiety, spends a different amount of time gaming and streaming compared to another group, for example: those with severe anxiety. Next, to understand which specific groups are different, we want to conduct post-hoc tests, like Tukey's HSD, to compare the means between each pair of GAD levels.
 
 #### Post hoc test
 
-The Tukey HSD test will compare the means of every possible pair of groups (levels of GAD) to see which means are significantly different from each other.
-
+The Tukey HSD test will compare the means of every possible pair of groups, for levels of GAD, to see which means are significantly different from each other.
 
 ```{r}
 # Perform the ANOVA
@@ -1252,79 +1245,164 @@ plot(tukey_result)
 
 ```
 
-The results suggest that individuals with higher levels of GAD (severe and moderate) tend to spend more combined hours on gaming and streaming compared to those with minimal anxiety. However, the difference between some intermediate levels (e.g., moderate vs. mild) is not statistically significant.
+The results suggest that individuals with higher levels of GAD, severe and moderate, tend to spend more combined hours on gaming and streaming compared to those with minimal anxiety. However, the difference between some intermediate levels, such as moderate vs. mild, is not statistically significant.
+
+## <u>Linear Regression Modeling</u>
+We want to make inferences on how mental health indicator scores and categories affect a person's time spent playing and streaming video games. In order to start this process, we are first going to guess that there is a linear relationship among all the variables.
+
+### Numeric Scores
+We will first start with a linear model that has individual or combined mental health scores as the independent variable(s) and hours playing and streaming as the dependent variable.
+
+```{r Numeric_LRM}
+# Fit the linear regression models
+lm_gad <- lm(hrs_stream_combined ~ GAD_T, data = df)
+lm_swl <- lm(hrs_stream_combined ~ SWL_T, data = df)
+lm_spin <- lm(hrs_stream_combined ~ SPIN_T, data = df)
+lm_3_combined <- lm(hrs_stream_combined ~ GAD_T + SWL_T + SPIN_T, data = df)
+
+# Define the summaries of each model
+summary_gad <- summary(lm_gad)
+summary_swl <- summary(lm_swl)
+summary_spin <- summary(lm_spin)
+summary_3_combined <- summary(lm_3_combined)
+
+# Values
+## Intercepts and slopes
+intercept_gad <- coef(summary_gad)["(Intercept)", "Estimate"]
+slope_gad <- coef(summary_gad)["GAD_T", "Estimate"]
+## P-value for the slope
+p_value_gad <- coef(summary_gad)["GAD_T", "Pr(>|t|)"]
+## R-squared and Adjusted R-squared
+r_squared_gad <- summary_gad$r.squared
+adj_r_squared_gad <- summary_gad$adj.r.squared
+
+# Call the summaries
+summary_gad
+summary_swl
+summary_spin
+summary_3_combined
+
+# Visualize the relationship between Hours Playing & Streaming and GAD_T
+ggplot(df, aes(x = GAD_T, y = hrs_stream_combined)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Linear Regression: Hours Playing and Streaming vs GAD_T",
+       x = "Generalized Anxiety Disorder Total Score",
+       y = "Hours Spent Playing and Streaming Video Games") +
+  theme_minimal()
+
+# Visualize the relationship between Hours Playing & Streaming and SWL_T
+ggplot(df, aes(x = SWL_T, y = hrs_stream_combined)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Linear Regression: Hours Playing and Streaming vs SWL_T",
+       x = "Satisfaction with Life Total Score",
+       y = "Hours Spent Playing and Streaming Video Games") +
+  theme_minimal()
+
+# Visualize the relationship between Hours Playing & Streaming and SPIN_T
+ggplot(df, aes(x = SPIN_T, y = hrs_stream_combined)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Linear Regression: Hours Playing and Streaming vs SWL_T",
+       x = "Social Phobia Inventory Total Score",
+       y = "Hours Spent Playing and Streaming Video Games") +
+  theme_minimal()
+
+# Visualize the relationship among Hours Playing & Streaming and the three, numeric scores
+ggplot(df, aes(x = GAD_T + SWL_T + SPIN_T, y = hrs_stream_combined)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Linear Regression: Hours Playing and Streaming vs GAD_T + SWL_T + SPIN_T",
+       x = "3 Total Scores",
+       y = "Hours Spent Playing and Streaming Video Games") +
+  theme_minimal()
+```
+
+#### Outputs of Numeric Models
+I will only be talking about the GAD_T model, as similar logic can be applied to SWL_T, SPINT_T, and the combination of the three metrics. The intercept is `r intercept_gad`. The GAD model is telling us that people in our data set that have a total score of 0 for the GAD-7 questionnaire spends approximately `r round(intercept_gad, 0)` hours playing and streaming video games. The slope of the line of best fit is `r slope_gad`, which means that as the score from the questionnaire increases by 1, the amount of hours playing and streaming video games increases by approximately `r round(slope_gad, 1)` hours. However, the scatter plot is showing a huge issue. Players can only receive <b>integer value scores</b> when taking the GAD-7 questionnaire. This makes all other values in the models, like Adjusted R Squared and p-values (`r adj_r_squared_gad` and `r p_value_gad` respectively), useless. Before abandoning linear regression models altogether, let's see how using the ordinal categories for each metric plays out.
+
+### Ordinal Scores
+We will see how linear models that have the ordinal categories of each  metric functions as the independent variable(s) and hours playing and streaming as the dependent variable.
+
+```{r Odrinal_LRM}
+# Fit the linear regression models
+lm_gad_ord <- lm(hrs_stream_combined ~ GAD_ord, data = df)
+lm_GADE <- lm(hrs_stream_combined ~ GADE, data = df)
+lm_swl_ord <- lm(hrs_stream_combined ~ SWL_ord, data = df)
+lm_spin_ord <- lm(hrs_stream_combined ~ SPIN_ord, data = df)
+lm_4_ord <- lm(hrs_stream_combined ~ GAD_ord + GADE + SWL_ord + SPIN_ord, data = df)
+
+# Define the summaries of each model
+summary_gad_ord <- summary(lm_gad_ord)
+summary_GADE <- summary(lm_GADE)
+summary_swl_ord <- summary(lm_swl_ord)
+summary_spin_ord <- summary(lm_spin_ord)
+summary_4_ord <- summary(lm_4_ord)
+
+# Values
+## R-squared and Adjusted R-squared
+r_squared_gad_ord <- summary_gad_ord$r.squared
+adj_r_squared_gad_ord <- summary_gad_ord$adj.r.squared
+r_squared_4_ord <- summary_4_ord$r.squared
+adj_r_squared_4_ord <- summary_4_ord$adj.r.squared
+
+# Call the summaries
+summary_gad_ord
+summary_GADE
+summary_swl_ord
+summary_spin_ord
+summary_4_ord
+
+ggplot(df, aes(x = GAD_ord, y = hrs_stream_combined)) +
+    geom_boxplot() +
+    labs(title = "Boxplot of Total Hours by GAD Levels",
+         x = "GAD Ordinal Levels",
+         y = "Combined Hours (Gaming + Streaming)") +
+    theme_minimal()
+
+ggplot(df, aes(x = GADE, y = hrs_stream_combined)) +
+    geom_boxplot() +
+    labs(title = "Boxplot of Total Hours by GADE Levels",
+         x = "GADE Ordinal Levels",
+         y = "Combined Hours (Gaming + Streaming)") +
+    theme_minimal()
+
+ggplot(df, aes(x = SWL_ord, y = hrs_stream_combined)) +
+    geom_boxplot() +
+    labs(title = "Boxplot of Total Hours by SWL Levels",
+         x = "SWL Ordinal Levels",
+         y = "Combined Hours (Gaming + Streaming)") +
+    theme_minimal()
+
+ggplot(df, aes(x = SPIN_ord, y = hrs_stream_combined)) +
+    geom_boxplot() +
+    labs(title = "Boxplot of Total Hours by SPIN Levels",
+         x = "SPIN Ordinal Levels",
+         y = "Combined Hours (Gaming + Streaming)") +
+    theme_minimal()
+```
+
+#### Outputs of Ordinal Models
+
+Similarly with the numeric models, I will mostly only discuss the GAD_T model, as the logic for the other models is similar. Using ordinal categories was much better than raw, numeric scores. We get a clear depiction of median hours spent playing and streaming video games based on the category players align to. However, there is still a significant issue. While everything is set up correctly, we receive an R-squared value of `r r_squared_gad_ord`; the adjusted R-squared value is `r adj_r_squared_gad_ord`. This means that the model only `r round(adj_r_squared_gad_ord, 0)*100`% of the variance in the ordinal GAD categories is accounted for. Even using the model that combines all the ordinal categories, including GADE, yields an adjusted R-squared value of `r adj_r_squared_4_ord`, meaning only `r round(adj_r_squared_4_ord, 0)*100`% of the variance is accounted for. This evidence informs us that there is not a linear relationship among the metrics in the data set and hours spent playing and streaming video games. Linear regression is not the correct type of regression to perform for this analysis, so we will have to use logistic regression.
 
 ## <u>Key Findings</u> 
 
-Team 5's analysis reveals significant relationships between video game habits and mental health outcomes. First, increasing hours spent playing video games and streaming is associated with higher stream counts, as indicated by significant ANOVA results across all comparisons. This suggests that gamers who spend more hours playing are more likely to be heavily involved in the gaming community, leading to increased streaming activity.
+Our analysis reveals significant relationships between video game habits and mental health outcomes. First, increasing hours spent playing video games and streaming is associated with higher stream counts, as indicated by significant ANOVA results across all comparisons. This suggests that gamers who spend more hours playing are more likely to be heavily involved in the gaming community, leading to increased streaming activity.
 
-In examining the impact of anxiety levels on gaming behavior, we found that individuals with Very High anxiety levels engage in significantly more streaming hours compared to those with Low, Moderate, and High anxiety. Conversely, higher levels of gaming hours negatively affect subjective well-being (SWL_T), with significant declines observed at Very High hours played.
+In examining the impact of anxiety levels on gaming behavior, we found that individuals with Very High anxiety levels engage in significantly more streaming hours compared to those with Low, Moderate, and High anxiety. Conversely, higher levels of gaming hours negatively affect subjective well-being, with significant declines observed at Very High hours played.
 
-Additionally, SPIN_T scores significantly increase from Low to Very High levels of gaming, indicating that greater gaming engagement correlates with heightened psychological distress.
+Additionally, the calculated totals of SPIN scores significantly increase from Low to Very High levels of gaming, indicating that greater gaming engagement correlates with heightened psychological distress.
 
 Lastly, our chi-squared analysis shows that respondents who play video games for enjoyment report better mental health outcomes than those motivated by competition or escapism.
 
-As causality cannot be determined, Team 5 caveats this analysis by adding that pre-exiting mental health conditions and other life stressors could be a contributing factor to negative mental health outcomes. However, a correlative effect is clearly seen as exposed by the ANOVA and Chi-Sqaured tests we conducted. 
+As causality cannot be determined, we caveat this analysis by adding that pre-exiting mental health conditions, and other life stressors, could be a contributing factor to negative mental health outcomes. However, a correlative effect is clearly seen as exposed by the ANOVA and Chi-Squared tests we conducted. 
 
 ## <u>Recommendations</U>
 
-Team 5 recommends passing our findings to social scientists to adjust the survey instruments. Collecting more comprehensive demographic information would be invaluable, including factors such as respondents' socioeconomic status (e.g., ability to afford the cost of living), family history of mental health diagnoses, and other relevant contextual data. This information could help identify potential confounding variables and provide deeper insights into the relationships we observed.
+We recommend passing our findings to social scientists to adjust the survey instruments. Collecting more comprehensive demographic information would be invaluable, including factors such as respondents' socioeconomic status (e.g., ability to afford the cost of living), family history of mental health diagnoses, and other relevant contextual data. This information could help identify potential confounding variables and provide deeper insights into the relationships we observed.
 
 Given the non-normality of the inventory scores, we also recommend conducting logistic regression to observe the interaction of multiple predictors against the outcomes (inventory scores). Adding this layer of complexity would allow us to more effectively model how gaming habits affect mental health outcomes in gamers. 
 
 ## <u>References</u>
-
-
-
-## <u>Tree Based</u>
-```{r, trees}
- 
-str(df)
-```
- 
-``` {r, randomforest}
-df <- df[complete.cases(df$GAD_ord, df$cleaned_whyplay, df$hrs_stream_combined, df$Game,df$Platform, df$earning, df$Gender, df$Age, df$Work,df$Residence), ]
-
-
-
-#Random Forest does not allow chr, they have to be factors
-df$cleaned_whyplay <- factor(df$cleaned_whyplay)
-df$Game <- factor(df$Game)
-df$Gender <- factor(df$Gender)
-df$GAD_ord <- factor(as.character(df$GAD_ord))
-
-
-# Train Random Forest models with different numbers of trees
-
-
-model_rf_100 <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
-                             data = df, 
-                             ntree = 100)
-
-model_rf_200 <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
-                             data = df, 
-                             ntree = 200)
-
-model_rf_500 <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
-                             data = df, 
-                             ntree = 500)
-
-model_rf_1000 <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
-                             data = df, 
-                             ntree = 1000)
-
-# Print out accuracy for each model
-cat("Accuracy with 100 trees: ", mean(predict(model_rf_100) == df$GAD_ord), "\n")
-cat("Accuracy with 200 trees: ", mean(predict(model_rf_200) == df$GAD_ord), "\n")
-cat("Accuracy with 500 trees: ", mean(predict(model_rf_500) == df$GAD_ord), "\n")
-cat("Accuracy with 1000 trees: ", mean(predict(model_rf_1000) == df$GAD_ord), "\n")
-
-print(model_rf_100)
-print(model_rf_200)
-print(model_rf_500)
-print(model_rf_1000)
-```
-
-
-
-
