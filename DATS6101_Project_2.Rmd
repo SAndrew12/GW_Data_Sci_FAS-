@@ -1264,7 +1264,10 @@ Given the non-normality of the inventory scores, we also recommend conducting lo
 ## <u>Logistic Regression </u>
 # Create the Binary Variable
 
+According to the American Academy of Pediatrics (AAP), teens and adults should be limited to two hours of daily entertainment (PUT CITATION HERE). That means the threshold of 15 hours/ week can be considered as normal limit of online streaming and gaming.
+
 We want to develop a logistic regression model where the dependent variable is a binary indicator of whether the combined hours spent on gaming and streaming (hrs_stream_binary) exceed 15 hours per week.
+
 
 ```{r}
 # Create the binary variable indicating whether the combined hours are greater than 15
@@ -1272,13 +1275,12 @@ df$hrs_stream_binary <- ifelse(df$hrs_stream_combined > 15, 1, 0)
 table(df$hrs_stream_binary)
 ```
 
-
-
+We find that the count of hours greater than 15 is 5 times more than that of below 15. 
 
 
 # Converting categorical variables as factor variables
 
-For categorical variables like GADE and SWL, we should factorize them.
+The categorical variables that we think could have an influence on hours played/ week needs to be converted into factors in order to proceed with the next steps.
 
 ```{r}
 df$SPIN_ord <- as.factor(df$SPIN_ord)
@@ -1292,13 +1294,11 @@ df$Degree <- as.factor(df$Degree)
 df$Platform <- as.factor(df$Platform)
 df$GADE <- as.factor(df$GADE)
 
-
 ```
 
 
-
 # T-test and Chi-square tests
-We try to find out if the data support that `age` affects `survived`?
+Before building the model, we must find out if the predictors we think could have an influence on hours played per week actually have any relationship with the dependent variable.
  
 ```{r}
 
@@ -1342,11 +1342,16 @@ table_cleaned_whyplay <- table(df$cleaned_whyplay, df$hrs_stream_binary)
 chisq.test(table_cleaned_whyplay)
 
 ```
+
+
 The results suggest that the variables Age, SPIN_ord, SWL_ord, Work, Gender, Game, Platform, GADE, and cleaned_whyplay are likely to be good predictors of hrs_stream_binary based on the significance of their associations.
 GAD_ord gives Non-significant chi-squared result (p-value = 0.1), suggesting it is not a good predictor.
 
+Now in order to proceed with the model building, we need to ensure that the assumptions of logistic regression are met. Two of these assumptions like the dependent variable should be binary, the observations should be independent of each other have been already met. We now need to check the Linearity of Logits, that there is no multicollinearity and strong outliers in the data set.
+
+
 # Test the linearity of continuous predictors
-For continuous variable(Age), we use the Box-Tidwell test:
+In order to check this, we need to see if the relationship between continuous independent variable (Age) and the logit (log-odds) of the dependent variable is linear or not. We use the Box-Tidwell test to do this:
  
 ```{r}
 # Box-Tidwell test for continuous variables
@@ -1359,20 +1364,8 @@ summary(model_interaction_cont)
 ```
 
 The coefficient for Age_log is negative and significant (p = 0.00426). This suggests that the relationship between Age and the log-odds of the outcome is not strictly linear. Instead, there is a significant non-linear component in the relationship.
+So we now include a quadratic term for Age to capture non-linearity without creating high multicollinearity.
 
-
-# Check for multicollinearity
-
-Check for multicollinearity using the Variance Inflation Factor (VIF):
-
-```{r}
-# Check VIF
-vif(model_interaction_cont)
-
-```
-
-
-So we now include a quadratic term for Age to capture non-linearity without creating high multicollinearity
 
 ```{r}
 # Create quadratic term for Age
@@ -1388,14 +1381,16 @@ summary(model_poly)
 
 # Check for multicollinearity
 
-Check for multicollinearity using the Variance Inflation Factor (VIF):
+We then check for multicollinearity  using the Variance Inflation Factor (VIF):
 
 ```{r}
 # Check VIF
+library(car)
 vif(model_poly)
 
 ```
-We consider using spline functions to model the non-linear relationship more flexibly and potentially reduce multicollinearity.
+
+We find that the VIF values of Age and Age^2 are greater than 10. We consider using spline functions to model the non-linear relationship more flexibly and potentially reduce this multicollinearity.
 
 ```{r}
 
@@ -1412,8 +1407,12 @@ vif(model_spline)
 
 ```
 
-# Lack of Strong Outliers
-We examine standardized residuals and leverage values to identify outliers and influential points:
+Now we see that the VIF of all the independent variabales are within limits.
+
+# Check influence of Strong Outliers
+## Identify and Remove Rows with Missing Values for Model Variables
+
+We examine standardized residuals and leverage values to identify outliers and influential points. But before that we need to identify and remove the missing values from the dataset.
 
 ```{r}
 # Check for missing values
@@ -1421,9 +1420,7 @@ colSums(is.na(df))
 
 ```
 
-
-#Remove Rows with Missing Values for Model Variables
-We will create a subset of the data frame that includes only the variables used in the model and then remove rows with any missing values in these variables.
+We find that there are several missing values in the dataset. We will create a subset of the data frame that includes only the variables used in the model and then remove rows with any missing values in these variables.
 
 ```{r}
 
@@ -1440,7 +1437,9 @@ df_clean <- na.omit(df_model)
 
 
 # Calculate Standardized Residuals and Leverage Values and generate Influence Plot
-Now, fit the logistic regression model using the cleaned data frame. Calculate the standardized residuals and leverage values and add them to the cleaned data frame. Next, we use diagnostic plots (e.g., Cook's distance, leverage) to identify and potentially address any influential observations.
+
+Now, we fit the logistic regression model using the cleaned data frame, calculate the standardized residuals and leverage values and add them to the cleaned data frame. Next, we use diagnostic plots (e.g., Cook's distance, leverage) to identify and potentially address any influential observations.
+
 ```{r}
 
 # Fit the logistic regression model using the cleaned data
@@ -1460,3 +1459,175 @@ influencePlot(model)
 
 The model appears generally appropriate, but there are a few observations with standardized residuals slightly outside the typical range. The leverage values are mostly moderate. There are no extremely high leverage values that would be of significant concern. All Cook's distances are well below 1, indicating that no single observation is overly influential on the model's fit.
 
+# Model Assessment
+
+Now, we wish to test if the model a good one. That is, we assess the significance of each predictor by examining the p-values of the coefficients, create a confusion matrix using a chosen cut-off value (e.g., 0.5) and calculate the accuracy, Compute Precision, Recall, Specificity, F1-score. We also plot the ROC curve and calculate the Area Under the Curve (AUC), compute McFadden’s Pseudo-R2 to assess the model fit, compare models using AIC and BIC and evaluate the deviance of the model.
+
+```{r}
+
+# 1. Coefficients’ p-values
+summary(model)
+
+# 2. Confusion Matrix and Accuracy
+predicted_prob <- predict(model, type = "response")
+predicted_class <- ifelse(predicted_prob > 0.5, 1, 0)
+conf_matrix <- table(Predicted = predicted_class, Actual = df_clean$hrs_stream_binary)
+
+# Accuracy
+accuracy <- sum(diag(conf_matrix)) / sum(conf_matrix)
+print(accuracy)
+
+# 3. Precision, Recall, Specificity, F1-score
+library(caret)
+confusionMatrix(as.factor(predicted_class), as.factor(df_clean$hrs_stream_binary), positive = "1")
+
+# 4. ROC-AUC
+library(pROC)
+roc_obj <- roc(df_clean$hrs_stream_binary, predicted_prob)
+auc(roc_obj)
+plot(roc_obj)
+
+# 5. McFadden's Pseudo-R2
+library(pscl)
+pR2(model)
+
+# 6. Feature Selection / Model Comparison (AIC, BIC)
+# AIC and BIC
+AIC(model)
+BIC(model)
+
+# 7. Deviance
+model$deviance
+
+
+```
+1. Coefficients’ p-values
+The p-values for the coefficients indicate which predictors are statistically significant. Significant predictors at the 0.05 level are:
+
+(Intercept): p = 0.00791 (**)
+SWL_ord.Q: p = 0.01999 (*)
+ns(Age, df = 3)2: p = 0.04176 (*)
+ns(Age, df = 3)3: p = 0.01409 (*)
+WorkUnemployed / between jobs: p = 2.4e-05 (***)
+GenderMale: p = 2.2e-11 (***)
+GameOther: p = 0.00473 (**)
+GameStarcraft 2: p = 0.00043 (***)
+PlatformPC: p = 1.3e-05 (***)
+cleaned_whyplayhaving fun: p = 0.00539 (**)
+cleaned_whyplayrelaxing: p = 0.00039 (***)
+
+2. Confusion Matrix and Accuracy
+Accuracy: 0.84 (84%)
+Sensitivity (Recall): 0.99853
+Specificity: 0.00661
+Positive Predictive Value (Precision): 0.84047
+Negative Predictive Value: 0.46154
+Balanced Accuracy: 0.50257
+While the overall accuracy is high (84%), the model performs poorly in identifying the negative class (specificity is very low).
+
+3. ROC-AUC
+AUC: 0.638
+An AUC of 0.638 indicates that the model has a fair ability to discriminate between the two classes. Typically, values above 0.8 are considered good.
+
+4. McFadden's Pseudo-R2
+McFadden's Pseudo-R2: 0.0383
+This value is relatively low, suggesting that the model does not explain much of the variability in the response variable.
+
+5. Feature Selection / Model Comparison (AIC, BIC)
+AIC: 9672
+BIC: 9980
+Lower values of AIC and BIC indicate a better fit. Here, the AIC and BIC values can be used to compare different models.
+
+6. Deviance
+Null deviance: 9969.5
+Residual deviance: 9587.6
+The reduction in deviance from the null deviance to the residual deviance indicates that the model explains some of the variance, but the fit could be better.
+
+Summary and Recommendations
+Predictive Power:
+
+The model has some predictive power as indicated by the significant predictors and the overall accuracy.
+The ROC-AUC value suggests a fair discrimination ability.
+The high sensitivity indicates that the model is good at predicting the positive class but performs poorly for the negative class (very low specificity).
+Model Fit:
+
+McFadden's Pseudo-R2 is low, indicating that the model does not explain much of the variance in the data.
+The AIC and BIC values are relatively high, suggesting that the model could be further improved.
+
+
+# Adjusting the Cut-off Threshold
+
+We can use the ROC curve to find the optimal cut-off value that balances sensitivity and specificity. 
+
+# Predict Probabilities
+Generate the predicted probabilities from the model.
+
+```{r}
+
+predicted_probabilities <- predict(model, newdata = df_clean, type = "response")
+
+library(pROC)
+roc_obj <- roc(df_clean$hrs_stream_binary, predicted_probabilities)
+
+# Plot the ROC curve
+plot(roc_obj)
+
+# Find the optimal cut-off
+optimal_cutoff <- coords(roc_obj, "best", ret = "threshold", best.method = "closest.topleft")
+optimal_cutoff
+
+optimal_cutoff <- optimal_cutoff[1]  # Extract the cut-off value
+
+
+```
+
+The optimal cut-off threshold identified from the ROC curve is approximately 0.839. This means that using a cut-off value of 0.839 instead of the default 0.5 can potentially provide a better balance between sensitivity (true positive rate) and specificity (true negative rate) for your logistic regression model.
+
+
+# Apply the Optimal Cut-off
+
+```{r}
+# Generate predicted classes using the optimal cut-off
+predicted_classes_optimal <- ifelse(predicted_probabilities > optimal_cutoff, 1, 0)
+
+# Ensure the vectors are of the same length
+cat("Length of predicted probabilities: ", length(predicted_probabilities), "\n")
+cat("Length of predicted classes (optimal): ", length(predicted_classes_optimal), "\n")
+cat("Length of actual binary outcome: ", length(df_clean$hrs_stream_binary), "\n")
+
+# Check for NA values in the actual binary outcome
+cat("Number of NA values in actual binary outcome: ", sum(is.na(df_clean$hrs_stream_binary)), "\n")
+
+# Check for NA values in predicted classes
+cat("Number of NA values in predicted classes (optimal): ", sum(is.na(predicted_classes_optimal)), "\n")
+
+# Confusion Matrix
+conf_matrix_optimal <- table(predicted_classes_optimal, df_clean$hrs_stream_binary)
+print(conf_matrix_optimal)
+
+# Calculate performance metrics
+accuracy_optimal <- sum(diag(conf_matrix_optimal)) / sum(conf_matrix_optimal)
+precision_optimal <- conf_matrix_optimal[2, 2] / (conf_matrix_optimal[2, 2] + conf_matrix_optimal[2, 1])
+recall_optimal <- conf_matrix_optimal[2, 2] / (conf_matrix_optimal[2, 2] + conf_matrix_optimal[1, 2])
+f1_score_optimal <- 2 * (precision_optimal * recall_optimal) / (precision_optimal + recall_optimal)
+
+# Print the results
+cat("Accuracy (optimal cut-off): ", accuracy_optimal, "\n")
+cat("Precision (optimal cut-off): ", precision_optimal, "\n")
+cat("Recall (optimal cut-off): ", recall_optimal, "\n")
+cat("F1 Score (optimal cut-off): ", f1_score_optimal, "\n")
+
+
+```
+Accuracy (0.605): The model is correct 60.5% of the time, which is moderate but not particularly high.
+Precision (0.891): High precision indicates that when the model predicts a positive outcome, it is likely correct 89.1% of the time.
+Recall (0.603): The recall is moderate, meaning the model is capturing about 60.3% of all positive cases.
+F1 Score (0.719): The F1 score provides a balance between precision and recall, indicating a reasonable balance but still suggesting room for improvement.
+
+
+# Conclusion
+At the 0.5 Cut-off, the model has high accuracy (84%), but it is biased towards predicting the positive class. This leads to a very low specificity (0.0066), meaning the model fails to correctly identify negative cases (high false positive rate).
+
+At the 0.839 Cut-off, the model has lower accuracy (60.5%), but it performs better in identifying true positives and minimizes the number of false positives. The model's precision is high (0.891), and the recall is moderate (0.603), balancing the identification of both positive and negative classes.
+
+We are going to use the 0.839 cut-off, as it improves the model's ability to correctly classify the negative cases.
