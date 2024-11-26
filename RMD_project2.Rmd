@@ -27,6 +27,7 @@ library(reshape2)
 library(gridExtra)
 library(patchwork)
 library(randomForest)
+library(smotefamily)
 ```
 
 
@@ -1416,13 +1417,12 @@ Given the non-normality of the inventory scores, we also recommend conducting lo
 
 
 
-## <u>Tree Based</u>
-```{r, trees}
- 
-str(df)
-```
- 
-``` {r, randomforest}
+
+### Tree Based -- Classifcication 
+
+Baseline model
+
+``` {r, randomforest_classifcation}
 df <- df[complete.cases(df$GAD_ord, df$cleaned_whyplay, df$hrs_stream_combined, df$Game,df$Platform, df$earning, df$Gender, df$Age, df$Work,df$Residence), ]
 
 
@@ -1433,36 +1433,229 @@ df$Game <- factor(df$Game)
 df$Gender <- factor(df$Gender)
 df$GAD_ord <- factor(as.character(df$GAD_ord))
 
+#SMOTE
+# Apply SMOTE to balance the dataset
+#balanced_data <- SMOTE(GAD_ord ~ cleaned_whyplay + hrs_stream_combined, data = df, K = 5, perc.over = 200, perc.under = 200)
+
+#table(balanced_data$GAD_ord)
 
 # Train Random Forest models with different numbers of trees
 
 
-model_rf_100 <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
-                             data = df, 
-                             ntree = 100)
+#model_small <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined ,
+#                             data = df, 
+ #                            ntree = 500)
 
-model_rf_200 <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
+model_small <- randomForest(GAD_ord ~ cleaned_whyplay + Age + Gender + Hours * streams ,
                              data = df, 
-                             ntree = 200)
+                             ntree = 1)
 
-model_rf_500 <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
-                             data = df, 
-                             ntree = 500)
 
-model_rf_1000 <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
-                             data = df, 
-                             ntree = 1000)
+#model_balanced <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined, 
+                              # data = #balanced_data, 
+                              # ntree = 500)
+
+#model_large <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
+                             #data = df, 
+                             #ntree = 500)
+
+
 
 # Print out accuracy for each model
-cat("Accuracy with 100 trees: ", mean(predict(model_rf_100) == df$GAD_ord), "\n")
-cat("Accuracy with 200 trees: ", mean(predict(model_rf_200) == df$GAD_ord), "\n")
-cat("Accuracy with 500 trees: ", mean(predict(model_rf_500) == df$GAD_ord), "\n")
-cat("Accuracy with 1000 trees: ", mean(predict(model_rf_1000) == df$GAD_ord), "\n")
+#cat("Accuracy -- bal: ", mean(predict(model_balanced) == balanced_data$GAD_ord), "\n")
+cat("Accuracy -- small: ", mean(predict(model_small) == df$GAD_ord), "\n")
+#cat("Accuracy -- large: ", mean(predict(model_large) == df$GAD_ord), "\n")
 
-print(model_rf_100)
-print(model_rf_200)
-print(model_rf_500)
-print(model_rf_1000)
+
+#print(model_balanced)
+print(model_small)
+#print(model_large)
+importance(model_small)
+varImpPlot(model_small)
+
+
+# Calculate counts for each GAD_ord class
+class_counts <- table(df$GAD_ord)
+
+# Calculate percentages
+class_percentages <- prop.table(class_counts) * 100
+
+# Print counts and percentages
+print(class_counts)
+print(class_percentages)
+
+# Pie chart of class percentages
+pie(class_counts,
+    main = "Percentage of GAD_ord Classes",
+    col = rainbow(length(class_counts)),
+    labels = paste(names(class_counts), round(class_percentages, 1), "%"))
+
+
+```
+
+
+Apply smote to balance severe anxiety
+
+```{r, smote}
+
+
+cleaned_whyplay_encoded <- as.integer(factor(df$cleaned_whyplay))
+gender_encoded <- as.integer(factor(df$Gender))
+game_encoded <- as.integer(factor(df$Game))
+
+# Add the encoded column to your dataset
+df$cleaned_whyplay_encoded <- cleaned_whyplay_encoded
+
+# Display the first few rows of the dataset
+str(df)
+
+
+
+
+# Ensure the target variable GAD_ord is a factor
+df$GAD_ord <- as.factor(df$GAD_ord)
+
+# Select the relevant predictors and the target variable
+predictors <- df[, c("cleaned_whyplay_encoded", "Hours", "streams")]
+target <- df$GAD_ord
+
+# Apply SMOTE
+set.seed(123) # For reproducibility
+smote_result <- SMOTE(X = predictors, target = target, K = 5, dup_size = 4)
+
+# Combine the SMOTE result into a new data frame
+smote_data <- data.frame(smote_result$data)
+
+# Rename the target variable
+names(smote_data)[ncol(smote_data)] <- "GAD_ord"
+
+# Ensure the target variable in the new data frame is a factor
+smote_data$GAD_ord <- as.factor(smote_data$GAD_ord)
+
+# Verify the distribution of the target variable after SMOTE
+print(table(smote_data$GAD_ord))
+
+str(smote_data)
+
+
+```
+
+run smote again for the next minority class
+
+```{r, smote_again}
+# Ensure the target variable GAD_ord is a factor
+df$GAD_ord <- as.factor(df$GAD_ord)
+
+# Select the relevant predictors and the target variable
+predictors <- smote_data[, c("cleaned_whyplay_encoded", "Hours", "streams")]
+target <- smote_data$GAD_ord
+
+# Apply SMOTE
+set.seed(123) # For reproducibility
+smote_result <- SMOTE(X = predictors, target = target, K = 5, dup_size = 2)
+
+# Combine the SMOTE result into a new data frame
+smote_data2 <- data.frame(smote_result$data)
+
+# Rename the target variable
+names(smote_data2)[ncol(smote_data)] <- "GAD_ord"
+
+# Ensure the target variable in the new data frame is a factor
+smote_data2$GAD_ord <- as.factor(smote_data2$GAD_ord)
+
+# Verify the distribution of the target variable after SMOTE
+print(table(smote_data2$GAD_ord))
+
+
+class_counts <- table(smote_data2$GAD_ord)
+
+class_percentages <- prop.table(class_counts) * 100
+
+# Pie chart of class percentages
+pie(class_counts,
+    main = "Percentage of GAD_ord Classes",
+    col = rainbow(length(class_counts)),
+    labels = paste(names(class_counts), round(class_percentages, 1), "%"))
+
+str(smote_data2)
+```
+
+test on oversample
+
+```{r}
+model_bal <- randomForest(GAD_ord ~ cleaned_whyplay_encoded + Hours * streams ,
+                             data = smote_data2, 
+                             ntree = 1000)
+
+cat("Accuracy -- bal: ", mean(predict(model_bal) == smote_data2$GAD_ord), "\n")
+
+print(model_bal)
+
+importance(model_bal)
+varImpPlot(model_bal)
+```
+
+now undersample the majority class
+
+```{r}
+# Check the distribution of the classes
+table(smote_data2$GAD_ord)
+
+# Ensure the "GAD_ord" column is a factor or character
+smote_data2$GAD_ord <- as.character(smote_data2$GAD_ord)  # Convert to character if it's a factor
+
+# Now, under-sample the "minimal anxiety" class to 3643
+set.seed(123)  # For reproducibility
+
+# Subset the "minimal anxiety" rows and the other classes
+minimal_anxiety <- smote_data2[smote_data2$GAD_ord == "minimal anxiety", ]
+other_classes <- smote_data2[smote_data2$GAD_ord != "minimal anxiety", ]
+
+# Ensure there are enough rows to sample from the "minimal anxiety" class
+if (nrow(minimal_anxiety) >= 3643) {
+  minimal_anxiety_undersampled <- minimal_anxiety[sample(1:nrow(minimal_anxiety), 3643), ]
+} else {
+  stop("Not enough rows in 'minimal anxiety' class to sample 3643.")
+}
+
+# Combine the undersampled "minimal anxiety" class with the other classes
+df_undersampled <- rbind(minimal_anxiety_undersampled, other_classes)
+
+# Check the new distribution
+table(df_undersampled$GAD_ord)
+
+
+class_counts <- table(df_undersampled$GAD_ord)
+
+class_percentages <- prop.table(class_counts) * 100
+
+# Pie chart of class percentages
+pie(class_counts,
+    main = "Percentage of GAD_ord Classes",
+    col = rainbow(length(class_counts)),
+    labels = paste(names(class_counts), round(class_percentages, 1), "%"))
+
+
+df_undersampled$GAD_ord <- as.factor(df_undersampled$GAD_ord)
+```
+
+run the model again
+
+```{r}
+model_bal2 <- randomForest(GAD_ord ~ cleaned_whyplay_encoded + Hours + streams ,
+                             data = df_undersampled, 
+                             ntree = 5000,
+                            mtry = 3, 
+                            nodesize = 5, 
+                          importance = TRUE)
+
+cat("Accuracy -- bal: ", mean(predict(model_bal2) == df_undersampled$GAD_ord), "\n")
+
+print(model_bal2)
+
+importance(model_bal2)
+varImpPlot(model_bal2)
+
 ```
 
 
