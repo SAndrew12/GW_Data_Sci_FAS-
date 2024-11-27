@@ -10,7 +10,7 @@ output:
     toc: yes
     toc_depth: 3
     toc_float: yes
-bibliography: citations.bib
+bibliography: reference.bib
 csl: "apa.csl"
 ---
 
@@ -23,6 +23,9 @@ library(stringr)
 library(rstatix)
 library(knitr)
 library(kableExtra)
+library(reshape2)
+library(gridExtra)
+library(patchwork)
 ```
 
 
@@ -1257,14 +1260,14 @@ Team 5 recommends passing our findings to social scientists to adjust the survey
 
 Given the non-normality of the inventory scores, we also recommend conducting logistic regression to observe the interaction of multiple predictors against the outcomes (inventory scores). Adding this layer of complexity would allow us to more effectively model how gaming habits affect mental health outcomes in gamers. 
 
-## <u>References</u>
+
 
 
 
 ## <u>Logistic Regression </u>
 # Create the Binary Variable
 
-According to the American Academy of Pediatrics (AAP), teens and adults should be limited to two hours of daily entertainment (PUT CITATION HERE). That means the threshold of 15 hours/ week can be considered as normal limit of online streaming and gaming.
+According to the American Academy of Pediatrics (AAP), teens and adults should be limited to two hours of daily entertainment [@nih_reduce_2013; @cam_adair_screen_2016]. It has been also found that those with three or more hours of screen time were 34% more likely to have a “suicide-related outcome,” meaning suicidal ideation, suicidal plan and/or suicide attempt. Those with five or more hours of screen time were 48% more likely to have a suicide-related outcome [@mary_fristad_adults_2019]. That means the threshold of 15 hours/ week can be considered as normal limit of online streaming and gaming.
 
 We want to develop a logistic regression model where the dependent variable is a binary indicator of whether the combined hours spent on gaming and streaming (hrs_stream_binary) exceed 15 hours per week.
 
@@ -1588,7 +1591,8 @@ The optimal cut-off threshold identified from the ROC curve is approximately 0.8
 
 ```{r}
 # Generate predicted classes using the optimal cut-off
-predicted_classes_optimal <- ifelse(predicted_probabilities > optimal_cutoff, 1, 0)
+optimal_cutoff_value <- optimal_cutoff[1, "threshold"] # Ensure we're getting the right threshold value
+predicted_classes_optimal <- ifelse(predicted_probabilities > optimal_cutoff_value, 1, 0)
 
 # Ensure the vectors are of the same length
 cat("Length of predicted probabilities: ", length(predicted_probabilities), "\n")
@@ -1600,6 +1604,11 @@ cat("Number of NA values in actual binary outcome: ", sum(is.na(df_clean$hrs_str
 
 # Check for NA values in predicted classes
 cat("Number of NA values in predicted classes (optimal): ", sum(is.na(predicted_classes_optimal)), "\n")
+
+# Ensure all vectors are of the same length
+if (length(predicted_classes_optimal) != length(df_clean$hrs_stream_binary)) {
+  stop("Lengths of predicted_classes_optimal and df_clean$hrs_stream_binary do not match.")
+}
 
 # Confusion Matrix
 conf_matrix_optimal <- table(predicted_classes_optimal, df_clean$hrs_stream_binary)
@@ -1617,7 +1626,6 @@ cat("Precision (optimal cut-off): ", precision_optimal, "\n")
 cat("Recall (optimal cut-off): ", recall_optimal, "\n")
 cat("F1 Score (optimal cut-off): ", f1_score_optimal, "\n")
 
-
 ```
 Accuracy (0.605): The model is correct 60.5% of the time, which is moderate but not particularly high.
 Precision (0.891): High precision indicates that when the model predicts a positive outcome, it is likely correct 89.1% of the time.
@@ -1631,3 +1639,8 @@ At the 0.5 Cut-off, the model has high accuracy (84%), but it is biased towards 
 At the 0.839 Cut-off, the model has lower accuracy (60.5%), but it performs better in identifying true positives and minimizes the number of false positives. The model's precision is high (0.891), and the recall is moderate (0.603), balancing the identification of both positive and negative classes.
 
 We are going to use the 0.839 cut-off, as it improves the model's ability to correctly classify the negative cases.
+
+
+
+
+## <u>References</u>
