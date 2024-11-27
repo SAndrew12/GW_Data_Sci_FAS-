@@ -1503,9 +1503,11 @@ cleaned_whyplay_encoded <- as.integer(factor(df$cleaned_whyplay))
 gender_encoded <- as.integer(factor(df$Gender))
 game_encoded <- as.integer(factor(df$Game))
 
+
 # Add the encoded column to your dataset
 df$cleaned_whyplay_encoded <- cleaned_whyplay_encoded
-
+df$gender_encoded <- gender_encoded
+df$game_encoded <- game_encoded
 # Display the first few rows of the dataset
 str(df)
 
@@ -1516,12 +1518,12 @@ str(df)
 df$GAD_ord <- as.factor(df$GAD_ord)
 
 # Select the relevant predictors and the target variable
-predictors <- df[, c("cleaned_whyplay_encoded", "Hours", "streams")]
+predictors <- df[, c("cleaned_whyplay_encoded", "Hours", "streams", "game_encoded", "gender_encoded", "Age")]
 target <- df$GAD_ord
 
 # Apply SMOTE
 set.seed(123) # For reproducibility
-smote_result <- SMOTE(X = predictors, target = target, K = 5, dup_size = 4)
+smote_result <- SMOTE(X = predictors, target = target, K = 1, dup_size = 4)
 
 # Combine the SMOTE result into a new data frame
 smote_data <- data.frame(smote_result$data)
@@ -1547,12 +1549,12 @@ run smote again for the next minority class
 df$GAD_ord <- as.factor(df$GAD_ord)
 
 # Select the relevant predictors and the target variable
-predictors <- smote_data[, c("cleaned_whyplay_encoded", "Hours", "streams")]
+predictors <- smote_data[, c("cleaned_whyplay_encoded", "Hours", "streams", "gender_encoded", "game_encoded", "Age")]
 target <- smote_data$GAD_ord
 
 # Apply SMOTE
 set.seed(123) # For reproducibility
-smote_result <- SMOTE(X = predictors, target = target, K = 5, dup_size = 2)
+smote_result <- SMOTE(X = predictors, target = target, K = 1, dup_size = 2)
 
 # Combine the SMOTE result into a new data frame
 smote_data2 <- data.frame(smote_result$data)
@@ -1641,8 +1643,8 @@ df_undersampled$GAD_ord <- as.factor(df_undersampled$GAD_ord)
 
 run the model again
 
-```{r}
-model_bal2 <- randomForest(GAD_ord ~ cleaned_whyplay_encoded + Hours + streams ,
+```{r, balmodel}
+model_bal2 <- randomForest(GAD_ord ~ cleaned_whyplay_encoded + Hours + streams + game_encoded + gender_encoded + Age ,
                              data = df_undersampled, 
                              ntree = 5000,
                             mtry = 3, 
@@ -1657,6 +1659,8 @@ importance(model_bal2)
 varImpPlot(model_bal2)
 
 ```
+
+
 
 
 
