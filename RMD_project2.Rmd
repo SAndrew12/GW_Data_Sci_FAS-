@@ -1644,19 +1644,28 @@ df_undersampled$GAD_ord <- as.factor(df_undersampled$GAD_ord)
 run the model again
 
 ```{r, balmodel}
-model_bal2 <- randomForest(GAD_ord ~ cleaned_whyplay_encoded + Hours + streams + game_encoded + gender_encoded + Age ,
-                             data = df_undersampled, 
-                             ntree = 5000,
-                            mtry = 3, 
-                            nodesize = 5, 
-                          importance = TRUE)
+#consolidate mild-moderate 
+df_undersampled$GAD_ord <- ifelse(df_undersampled$GAD_ord %in% c("mild anxiety", "moderate anxiety"), 
+                                  "mild-moderate anxiety", 
+                                  df_undersampled$GAD_ord)
 
-cat("Accuracy -- bal: ", mean(predict(model_bal2) == df_undersampled$GAD_ord), "\n")
+df_undersampled$GAD_ord <- as.factor(df_undersampled$GAD_ord)
 
-print(model_bal2)
+str(df_undersampled)
 
-importance(model_bal2)
-varImpPlot(model_bal2)
+#model_bal2 <- randomForest(GAD_ord ~ cleaned_whyplay_encoded + Hours + streams + game_encoded + gender_encoded + Age ,
+#                             data = df_undersampled, 
+#                             ntree = 5000,
+#                            mtry = 3, 
+#                            nodesize = 5, 
+#                          importance = TRUE)
+
+#cat("Accuracy -- bal: ", mean(predict(model_bal2) == df_undersampled$GAD_ord), "\n")
+
+#print(model_bal2)
+
+#importance(model_bal2)
+#varImpPlot(model_bal2)
 
 ```
 
