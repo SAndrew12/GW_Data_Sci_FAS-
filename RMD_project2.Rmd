@@ -27,6 +27,7 @@ library(reshape2)
 library(gridExtra)
 library(patchwork)
 library(randomForest)
+library(smotefamily)
 ```
 
 
@@ -1254,6 +1255,146 @@ plot(tukey_result)
 
 The results suggest that individuals with higher levels of GAD (severe and moderate) tend to spend more combined hours on gaming and streaming compared to those with minimal anxiety. However, the difference between some intermediate levels (e.g., moderate vs. mild) is not statistically significant.
 
+## <u>Linear Regression Modeling</u>
+We want to make inferences on how mental health indicator scores and categories affect a person's time spent playing and streaming video games. In order to start this process, we are first going to guess that there is a linear relationship among all the variables.
+
+### Numeric Scores
+We will first start with a linear model that has individual or combined mental health scores as the independent variable(s) and hours playing and streaming as the dependent variable.
+
+```{r Numeric_LRM}
+# Fit the linear regression models
+lm_gad <- lm(hrs_stream_combined ~ GAD_T, data = df)
+lm_swl <- lm(hrs_stream_combined ~ SWL_T, data = df)
+lm_spin <- lm(hrs_stream_combined ~ SPIN_T, data = df)
+lm_3_combined <- lm(hrs_stream_combined ~ GAD_T + SWL_T + SPIN_T, data = df)
+
+# Define the summaries of each model
+summary_gad <- summary(lm_gad)
+summary_swl <- summary(lm_swl)
+summary_spin <- summary(lm_spin)
+summary_3_combined <- summary(lm_3_combined)
+
+# Values
+## Intercepts and slopes
+intercept_gad <- coef(summary_gad)["(Intercept)", "Estimate"]
+slope_gad <- coef(summary_gad)["GAD_T", "Estimate"]
+## P-value for the slope
+p_value_gad <- coef(summary_gad)["GAD_T", "Pr(>|t|)"]
+## R-squared and Adjusted R-squared
+r_squared_gad <- summary_gad$r.squared
+adj_r_squared_gad <- summary_gad$adj.r.squared
+
+# Call the summaries
+summary_gad
+summary_swl
+summary_spin
+summary_3_combined
+
+# Visualize the relationship between Hours Playing & Streaming and GAD_T
+ggplot(df, aes(x = GAD_T, y = hrs_stream_combined)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Linear Regression: Hours Playing and Streaming vs GAD_T",
+       x = "Generalized Anxiety Disorder Total Score",
+       y = "Hours Spent Playing and Streaming Video Games") +
+  theme_minimal()
+
+# Visualize the relationship between Hours Playing & Streaming and SWL_T
+ggplot(df, aes(x = SWL_T, y = hrs_stream_combined)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Linear Regression: Hours Playing and Streaming vs SWL_T",
+       x = "Satisfaction with Life Total Score",
+       y = "Hours Spent Playing and Streaming Video Games") +
+  theme_minimal()
+
+# Visualize the relationship between Hours Playing & Streaming and SPIN_T
+ggplot(df, aes(x = SPIN_T, y = hrs_stream_combined)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Linear Regression: Hours Playing and Streaming vs SWL_T",
+       x = "Social Phobia Inventory Total Score",
+       y = "Hours Spent Playing and Streaming Video Games") +
+  theme_minimal()
+
+# Visualize the relationship among Hours Playing & Streaming and the three, numeric scores
+ggplot(df, aes(x = GAD_T + SWL_T + SPIN_T, y = hrs_stream_combined)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Linear Regression: Hours Playing and Streaming vs GAD_T + SWL_T + SPIN_T",
+       x = "3 Total Scores",
+       y = "Hours Spent Playing and Streaming Video Games") +
+  theme_minimal()
+```
+
+#### Outputs of Numeric Models
+I will only be talking about the GAD_T model, as similar logic can be applied to SWL_T, SPINT_T, and the combination of the three metrics. The intercept is `r intercept_gad`. The GAD model is telling us that people in our data set that have a total score of 0 for the GAD-7 questionnaire spends approximately `r round(intercept_gad, 0)` hours playing and streaming video games. The slope of the line of best fit is `r slope_gad`, which means that as the score from the questionnaire increases by 1, the amount of hours playing and streaming video games increases by approximately `r round(slope_gad, 1)` hours. However, the scatter plot is showing a huge issue. Players can only receive <b>integer value scores</b> when taking the GAD-7 questionnaire. This makes all other values in the models, like Adjusted R Squared and p-values (`r adj_r_squared_gad` and `r p_value_gad` respectively), useless. Before abandoning linear regression models altogether, let's see how using the ordinal categories for each metric plays out.
+
+### Ordinal Scores
+We will see how linear models that have the ordinal categories of each  metric functions as the independent variable(s) and hours playing and streaming as the dependent variable.
+
+```{r Odrinal_LRM}
+# Fit the linear regression models
+lm_gad_ord <- lm(hrs_stream_combined ~ GAD_ord, data = df)
+lm_GADE <- lm(hrs_stream_combined ~ GADE, data = df)
+lm_swl_ord <- lm(hrs_stream_combined ~ SWL_ord, data = df)
+lm_spin_ord <- lm(hrs_stream_combined ~ SPIN_ord, data = df)
+lm_4_ord <- lm(hrs_stream_combined ~ GAD_ord + GADE + SWL_ord + SPIN_ord, data = df)
+
+# Define the summaries of each model
+summary_gad_ord <- summary(lm_gad_ord)
+summary_GADE <- summary(lm_GADE)
+summary_swl_ord <- summary(lm_swl_ord)
+summary_spin_ord <- summary(lm_spin_ord)
+summary_4_ord <- summary(lm_4_ord)
+
+# Values
+## R-squared and Adjusted R-squared
+r_squared_gad_ord <- summary_gad_ord$r.squared
+adj_r_squared_gad_ord <- summary_gad_ord$adj.r.squared
+r_squared_4_ord <- summary_4_ord$r.squared
+adj_r_squared_4_ord <- summary_4_ord$adj.r.squared
+
+# Call the summaries
+summary_gad_ord
+summary_GADE
+summary_swl_ord
+summary_spin_ord
+summary_4_ord
+
+ggplot(df, aes(x = GAD_ord, y = hrs_stream_combined)) +
+    geom_boxplot() +
+    labs(title = "Boxplot of Total Hours by GAD Levels",
+         x = "GAD Ordinal Levels",
+         y = "Combined Hours (Gaming + Streaming)") +
+    theme_minimal()
+
+ggplot(df, aes(x = GADE, y = hrs_stream_combined)) +
+    geom_boxplot() +
+    labs(title = "Boxplot of Total Hours by GADE Levels",
+         x = "GADE Ordinal Levels",
+         y = "Combined Hours (Gaming + Streaming)") +
+    theme_minimal()
+
+ggplot(df, aes(x = SWL_ord, y = hrs_stream_combined)) +
+    geom_boxplot() +
+    labs(title = "Boxplot of Total Hours by SWL Levels",
+         x = "SWL Ordinal Levels",
+         y = "Combined Hours (Gaming + Streaming)") +
+    theme_minimal()
+
+ggplot(df, aes(x = SPIN_ord, y = hrs_stream_combined)) +
+    geom_boxplot() +
+    labs(title = "Boxplot of Total Hours by SPIN Levels",
+         x = "SPIN Ordinal Levels",
+         y = "Combined Hours (Gaming + Streaming)") +
+    theme_minimal()
+```
+
+#### Outputs of Ordinal Models
+
+Similarly with the numeric models, I will mostly only discuss the GAD_T model, as the logic for the other models is similar. Using ordinal categories was much better than raw, numeric scores. We get a clear depiction of median hours spent playing and streaming video games based on the category players align to. However, there is still a significant issue. While everything is set up correctly, we receive an R-squared value of `r r_squared_gad_ord`; the adjusted R-squared value is `r adj_r_squared_gad_ord`. This means that the model only `r round(adj_r_squared_gad_ord, 0)*100`% of the variance in the ordinal GAD categories is accounted for. Even using the model that combines all the ordinal categories, including GADE, yields an adjusted R-squared value of `r adj_r_squared_4_ord`, meaning only `r round(adj_r_squared_4_ord, 0)*100`% of the variance is accounted for. This evidence informs us that there is not a linear relationship among the metrics in the data set and hours spent playing and streaming video games. Linear regression is not the correct type of regression to perform for this analysis, so we will have to use logistic regression.
+
 ## <u>Key Findings</u> 
 
 Team 5's analysis reveals significant relationships between video game habits and mental health outcomes. First, increasing hours spent playing video games and streaming is associated with higher stream counts, as indicated by significant ANOVA results across all comparisons. This suggests that gamers who spend more hours playing are more likely to be heavily involved in the gaming community, leading to increased streaming activity.
@@ -1276,13 +1417,12 @@ Given the non-normality of the inventory scores, we also recommend conducting lo
 
 
 
-## <u>Tree Based</u>
-```{r, trees}
- 
-str(df)
-```
- 
-``` {r, randomforest}
+
+### Tree Based -- Classifcication 
+
+Baseline model
+
+``` {r, randomforest_classifcation}
 df <- df[complete.cases(df$GAD_ord, df$cleaned_whyplay, df$hrs_stream_combined, df$Game,df$Platform, df$earning, df$Gender, df$Age, df$Work,df$Residence), ]
 
 
@@ -1293,37 +1433,243 @@ df$Game <- factor(df$Game)
 df$Gender <- factor(df$Gender)
 df$GAD_ord <- factor(as.character(df$GAD_ord))
 
+#SMOTE
+# Apply SMOTE to balance the dataset
+#balanced_data <- SMOTE(GAD_ord ~ cleaned_whyplay + hrs_stream_combined, data = df, K = 5, perc.over = 200, perc.under = 200)
+
+#table(balanced_data$GAD_ord)
 
 # Train Random Forest models with different numbers of trees
 
 
-model_rf_100 <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
-                             data = df, 
-                             ntree = 100)
+#model_small <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined ,
+#                             data = df, 
+ #                            ntree = 500)
 
-model_rf_200 <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
+model_small <- randomForest(GAD_ord ~ cleaned_whyplay + Age + Gender + Hours * streams ,
                              data = df, 
-                             ntree = 200)
+                             ntree = 1)
 
-model_rf_500 <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
-                             data = df, 
-                             ntree = 500)
 
-model_rf_1000 <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
-                             data = df, 
-                             ntree = 1000)
+#model_balanced <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined, 
+                              # data = #balanced_data, 
+                              # ntree = 500)
+
+#model_large <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
+                             #data = df, 
+                             #ntree = 500)
+
+
 
 # Print out accuracy for each model
-cat("Accuracy with 100 trees: ", mean(predict(model_rf_100) == df$GAD_ord), "\n")
-cat("Accuracy with 200 trees: ", mean(predict(model_rf_200) == df$GAD_ord), "\n")
-cat("Accuracy with 500 trees: ", mean(predict(model_rf_500) == df$GAD_ord), "\n")
-cat("Accuracy with 1000 trees: ", mean(predict(model_rf_1000) == df$GAD_ord), "\n")
+#cat("Accuracy -- bal: ", mean(predict(model_balanced) == balanced_data$GAD_ord), "\n")
+cat("Accuracy -- small: ", mean(predict(model_small) == df$GAD_ord), "\n")
+#cat("Accuracy -- large: ", mean(predict(model_large) == df$GAD_ord), "\n")
 
-print(model_rf_100)
-print(model_rf_200)
-print(model_rf_500)
-print(model_rf_1000)
+
+#print(model_balanced)
+print(model_small)
+#print(model_large)
+importance(model_small)
+varImpPlot(model_small)
+
+
+# Calculate counts for each GAD_ord class
+class_counts <- table(df$GAD_ord)
+
+# Calculate percentages
+class_percentages <- prop.table(class_counts) * 100
+
+# Print counts and percentages
+print(class_counts)
+print(class_percentages)
+
+# Pie chart of class percentages
+pie(class_counts,
+    main = "Percentage of GAD_ord Classes",
+    col = rainbow(length(class_counts)),
+    labels = paste(names(class_counts), round(class_percentages, 1), "%"))
+
+
 ```
+
+
+Apply smote to balance severe anxiety
+
+```{r, smote}
+
+
+cleaned_whyplay_encoded <- as.integer(factor(df$cleaned_whyplay))
+gender_encoded <- as.integer(factor(df$Gender))
+game_encoded <- as.integer(factor(df$Game))
+
+
+# Add the encoded column to your dataset
+df$cleaned_whyplay_encoded <- cleaned_whyplay_encoded
+df$gender_encoded <- gender_encoded
+df$game_encoded <- game_encoded
+# Display the first few rows of the dataset
+str(df)
+
+
+
+
+# Ensure the target variable GAD_ord is a factor
+df$GAD_ord <- as.factor(df$GAD_ord)
+
+# Select the relevant predictors and the target variable
+predictors <- df[, c("cleaned_whyplay_encoded", "Hours", "streams", "game_encoded", "gender_encoded", "Age")]
+target <- df$GAD_ord
+
+# Apply SMOTE
+set.seed(123) # For reproducibility
+smote_result <- SMOTE(X = predictors, target = target, K = 1, dup_size = 4)
+
+# Combine the SMOTE result into a new data frame
+smote_data <- data.frame(smote_result$data)
+
+# Rename the target variable
+names(smote_data)[ncol(smote_data)] <- "GAD_ord"
+
+# Ensure the target variable in the new data frame is a factor
+smote_data$GAD_ord <- as.factor(smote_data$GAD_ord)
+
+# Verify the distribution of the target variable after SMOTE
+print(table(smote_data$GAD_ord))
+
+str(smote_data)
+
+
+```
+
+run smote again for the next minority class
+
+```{r, smote_again}
+# Ensure the target variable GAD_ord is a factor
+df$GAD_ord <- as.factor(df$GAD_ord)
+
+# Select the relevant predictors and the target variable
+predictors <- smote_data[, c("cleaned_whyplay_encoded", "Hours", "streams", "gender_encoded", "game_encoded", "Age")]
+target <- smote_data$GAD_ord
+
+# Apply SMOTE
+set.seed(123) # For reproducibility
+smote_result <- SMOTE(X = predictors, target = target, K = 1, dup_size = 2)
+
+# Combine the SMOTE result into a new data frame
+smote_data2 <- data.frame(smote_result$data)
+
+# Rename the target variable
+names(smote_data2)[ncol(smote_data)] <- "GAD_ord"
+
+# Ensure the target variable in the new data frame is a factor
+smote_data2$GAD_ord <- as.factor(smote_data2$GAD_ord)
+
+# Verify the distribution of the target variable after SMOTE
+print(table(smote_data2$GAD_ord))
+
+
+class_counts <- table(smote_data2$GAD_ord)
+
+class_percentages <- prop.table(class_counts) * 100
+
+# Pie chart of class percentages
+pie(class_counts,
+    main = "Percentage of GAD_ord Classes",
+    col = rainbow(length(class_counts)),
+    labels = paste(names(class_counts), round(class_percentages, 1), "%"))
+
+str(smote_data2)
+```
+
+test on oversample
+
+```{r}
+model_bal <- randomForest(GAD_ord ~ cleaned_whyplay_encoded + Hours * streams ,
+                             data = smote_data2, 
+                             ntree = 1000)
+
+cat("Accuracy -- bal: ", mean(predict(model_bal) == smote_data2$GAD_ord), "\n")
+
+print(model_bal)
+
+importance(model_bal)
+varImpPlot(model_bal)
+```
+
+now undersample the majority class
+
+```{r}
+# Check the distribution of the classes
+table(smote_data2$GAD_ord)
+
+# Ensure the "GAD_ord" column is a factor or character
+smote_data2$GAD_ord <- as.character(smote_data2$GAD_ord)  # Convert to character if it's a factor
+
+# Now, under-sample the "minimal anxiety" class to 3643
+set.seed(123)  # For reproducibility
+
+# Subset the "minimal anxiety" rows and the other classes
+minimal_anxiety <- smote_data2[smote_data2$GAD_ord == "minimal anxiety", ]
+other_classes <- smote_data2[smote_data2$GAD_ord != "minimal anxiety", ]
+
+# Ensure there are enough rows to sample from the "minimal anxiety" class
+if (nrow(minimal_anxiety) >= 3643) {
+  minimal_anxiety_undersampled <- minimal_anxiety[sample(1:nrow(minimal_anxiety), 3643), ]
+} else {
+  stop("Not enough rows in 'minimal anxiety' class to sample 3643.")
+}
+
+# Combine the undersampled "minimal anxiety" class with the other classes
+df_undersampled <- rbind(minimal_anxiety_undersampled, other_classes)
+
+# Check the new distribution
+table(df_undersampled$GAD_ord)
+
+
+class_counts <- table(df_undersampled$GAD_ord)
+
+class_percentages <- prop.table(class_counts) * 100
+
+# Pie chart of class percentages
+pie(class_counts,
+    main = "Percentage of GAD_ord Classes",
+    col = rainbow(length(class_counts)),
+    labels = paste(names(class_counts), round(class_percentages, 1), "%"))
+
+
+df_undersampled$GAD_ord <- as.factor(df_undersampled$GAD_ord)
+```
+
+run the model again
+
+```{r, balmodel}
+#consolidate mild-moderate 
+df_undersampled$GAD_ord <- ifelse(df_undersampled$GAD_ord %in% c("mild anxiety", "moderate anxiety"), 
+                                  "mild-moderate anxiety", 
+                                  df_undersampled$GAD_ord)
+
+df_undersampled$GAD_ord <- as.factor(df_undersampled$GAD_ord)
+
+str(df_undersampled)
+
+#model_bal2 <- randomForest(GAD_ord ~ cleaned_whyplay_encoded + Hours + streams + game_encoded + gender_encoded + Age ,
+#                             data = df_undersampled, 
+#                             ntree = 5000,
+#                            mtry = 3, 
+#                            nodesize = 5, 
+#                          importance = TRUE)
+
+#cat("Accuracy -- bal: ", mean(predict(model_bal2) == df_undersampled$GAD_ord), "\n")
+
+#print(model_bal2)
+
+#importance(model_bal2)
+#varImpPlot(model_bal2)
+
+```
+
+
 
 
 
