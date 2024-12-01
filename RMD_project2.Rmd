@@ -10,7 +10,7 @@ output:
     toc: yes
     toc_depth: 3
     toc_float: yes
-bibliography: citations.bib
+bibliography: reference.bib
 csl: "apa.csl"
 ---
 
@@ -28,6 +28,8 @@ library(gridExtra)
 library(patchwork)
 library(randomForest)
 library(smotefamily)
+library(caret)
+library(ranger)
 ```
 
 
@@ -1413,18 +1415,12 @@ Team 5 recommends passing our findings to social scientists to adjust the survey
 
 Given the non-normality of the inventory scores, we also recommend conducting logistic regression to observe the interaction of multiple predictors against the outcomes (inventory scores). Adding this layer of complexity would allow us to more effectively model how gaming habits affect mental health outcomes in gamers. 
 
-## <u>References</u>
-
-
-
-
 ### Tree Based -- Classifcication 
 
-Baseline model
+Initial Data prep
 
 ``` {r, randomforest_classifcation}
 df <- df[complete.cases(df$GAD_ord, df$cleaned_whyplay, df$hrs_stream_combined, df$Game,df$Platform, df$earning, df$Gender, df$Age, df$Work,df$Residence), ]
-
 
 
 #Random Forest does not allow chr, they have to be factors
@@ -1433,87 +1429,21 @@ df$Game <- factor(df$Game)
 df$Gender <- factor(df$Gender)
 df$GAD_ord <- factor(as.character(df$GAD_ord))
 
-#SMOTE
-# Apply SMOTE to balance the dataset
-#balanced_data <- SMOTE(GAD_ord ~ cleaned_whyplay + hrs_stream_combined, data = df, K = 5, perc.over = 200, perc.under = 200)
-
-#table(balanced_data$GAD_ord)
-
-# Train Random Forest models with different numbers of trees
-
-
-#model_small <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined ,
-#                             data = df, 
- #                            ntree = 500)
-
-model_small <- randomForest(GAD_ord ~ cleaned_whyplay + Age + Gender + Hours * streams ,
-                             data = df, 
-                             ntree = 1)
-
-
-#model_balanced <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined, 
-                              # data = #balanced_data, 
-                              # ntree = 500)
-
-#model_large <- randomForest(GAD_ord ~ cleaned_whyplay + hrs_stream_combined +Gender + Age + Game,
-                             #data = df, 
-                             #ntree = 500)
-
-
-
-# Print out accuracy for each model
-#cat("Accuracy -- bal: ", mean(predict(model_balanced) == balanced_data$GAD_ord), "\n")
-cat("Accuracy -- small: ", mean(predict(model_small) == df$GAD_ord), "\n")
-#cat("Accuracy -- large: ", mean(predict(model_large) == df$GAD_ord), "\n")
-
-
-#print(model_balanced)
-print(model_small)
-#print(model_large)
-importance(model_small)
-varImpPlot(model_small)
-
-
-# Calculate counts for each GAD_ord class
-class_counts <- table(df$GAD_ord)
-
-# Calculate percentages
-class_percentages <- prop.table(class_counts) * 100
-
-# Print counts and percentages
-print(class_counts)
-print(class_percentages)
-
-# Pie chart of class percentages
-pie(class_counts,
-    main = "Percentage of GAD_ord Classes",
-    col = rainbow(length(class_counts)),
-    labels = paste(names(class_counts), round(class_percentages, 1), "%"))
-
-
-```
-
-
-Apply smote to balance severe anxiety
-
-```{r, smote}
-
-
+#encode as needed
 cleaned_whyplay_encoded <- as.integer(factor(df$cleaned_whyplay))
 gender_encoded <- as.integer(factor(df$Gender))
 game_encoded <- as.integer(factor(df$Game))
 
-
-# Add the encoded column to your dataset
 df$cleaned_whyplay_encoded <- cleaned_whyplay_encoded
 df$gender_encoded <- gender_encoded
 df$game_encoded <- game_encoded
-# Display the first few rows of the dataset
 str(df)
+```
 
 
+### GAD
 
-
+```{r, smote_GAD}
 # Ensure the target variable GAD_ord is a factor
 df$GAD_ord <- as.factor(df$GAD_ord)
 
@@ -1537,14 +1467,14 @@ smote_data$GAD_ord <- as.factor(smote_data$GAD_ord)
 # Verify the distribution of the target variable after SMOTE
 print(table(smote_data$GAD_ord))
 
-str(smote_data)
+
 
 
 ```
 
-run smote again for the next minority class
+run smote again for the next minority class (GAD)
 
-```{r, smote_again}
+```{r, smote_again_gad}
 # Ensure the target variable GAD_ord is a factor
 df$GAD_ord <- as.factor(df$GAD_ord)
 
@@ -1582,24 +1512,23 @@ pie(class_counts,
 str(smote_data2)
 ```
 
-test on oversample
 
-```{r}
-model_bal <- randomForest(GAD_ord ~ cleaned_whyplay_encoded + Hours * streams ,
-                             data = smote_data2, 
-                             ntree = 1000)
+```{r, model_gad}
+#model_bal <- randomForest(GAD_ord ~ cleaned_whyplay_encoded + Hours * streams #,
+ #                            data = smote_data2, 
+ #                            ntree = 1000)
 
-cat("Accuracy -- bal: ", mean(predict(model_bal) == smote_data2$GAD_ord), "\n")
+#cat("Accuracy -- bal: ", mean(predict(model_bal) == smote_data2$GAD_ord), #"\n")
 
-print(model_bal)
+#print(model_bal)
 
-importance(model_bal)
-varImpPlot(model_bal)
+#importance(model_bal)
+#varImpPlot(model_bal)
 ```
 
 now undersample the majority class
 
-```{r}
+```{r, undersample_gad}
 # Check the distribution of the classes
 table(smote_data2$GAD_ord)
 
@@ -1644,30 +1573,695 @@ df_undersampled$GAD_ord <- as.factor(df_undersampled$GAD_ord)
 run the model again
 
 ```{r, balmodel}
-#consolidate mild-moderate 
-df_undersampled$GAD_ord <- ifelse(df_undersampled$GAD_ord %in% c("mild anxiety", "moderate anxiety"), 
-                                  "mild-moderate anxiety", 
-                                  df_undersampled$GAD_ord)
+# Consolidate minimal and mild anxiety into "minimal-mild anxiety"
+df_undersampled$GAD_ord <- factor(
+  ifelse(df_undersampled$GAD_ord %in% c("minimal anxiety", "mild anxiety"), 
+         "minimal-mild anxiety", 
+         as.character(df_undersampled$GAD_ord)), # Retain other classes
+  levels = c("minimal-mild anxiety", "moderate anxiety", "severe anxiety") # Define desired order
+)
 
-df_undersampled$GAD_ord <- as.factor(df_undersampled$GAD_ord)
-
+# Verify structure
 str(df_undersampled)
 
-#model_bal2 <- randomForest(GAD_ord ~ cleaned_whyplay_encoded + Hours + streams + game_encoded + gender_encoded + Age ,
-#                             data = df_undersampled, 
-#                             ntree = 5000,
-#                            mtry = 3, 
-#                            nodesize = 5, 
-#                          importance = TRUE)
+#levels(df_undersampled$GAD_ord)
 
-#cat("Accuracy -- bal: ", mean(predict(model_bal2) == df_undersampled$GAD_ord), "\n")
 
-#print(model_bal2)
+model_bal2 <- randomForest(GAD_ord ~ cleaned_whyplay_encoded + Hours + streams + game_encoded + gender_encoded + Age ,
+                             data = df_undersampled, 
+                             ntree = 3000,
+                            mtry = 3, 
+                            nodesize = 5, 
+                         importance = TRUE)
+
+
+
+cat("Accuracy -- bal: ", mean(predict(model_bal2) == df_undersampled$GAD_ord), "\n")
+
+print(model_bal2)
 
 #importance(model_bal2)
-#varImpPlot(model_bal2)
+varImpPlot(model_bal2)
+
+minimal_mild <- df[df$GAD_ord %in% c("minimal anxiety", "mild anxiety"), ]
+
+# Summary statistics of GAD_T for each category
+aggregate(GAD_T ~ GAD_ord, data = minimal_mild, summary)
+
+
+
+# Violin plot to visualize the distribution with y-axis scaled from 0 to 9
+ggplot(minimal_mild, aes(x = GAD_ord, y = GAD_T, fill = GAD_ord)) +
+  geom_violin(trim = FALSE, alpha = 0.5) +
+  geom_boxplot(width = 0.2, position = position_dodge(0.9)) +
+  labs(title = "Violin Plot of GAD_T for Minimal and Mild Anxiety",
+       x = "Anxiety Category", y = "GAD_T Score", fill = "Anxiety Category") +
+  ylim(0, 9) +
+  theme_minimal()
+
+
+
+
 
 ```
+
+### SWL
+
+```{r, smote_swl}
+# Ensure the target variable GAD_ord is a factor
+df$SWL_ord <- as.factor(df$SWL_ord)
+print(table(df$SWL_ord))
+
+class_counts <- table(df$SWL_ord)
+
+class_percentages <- prop.table(class_counts) * 100
+
+# Pie chart of class percentages
+pie(class_counts,
+    main = "Percentage of SWL_ord Classes",
+    col = rainbow(length(class_counts)),
+    labels = paste(names(class_counts), round(class_percentages, 1), "%"))
+
+
+# Select the relevant predictors and the target variable
+predictors <- df[, c("cleaned_whyplay_encoded", "Hours", "streams", "game_encoded", "gender_encoded", "Age")]
+target <- df$SWL_ord
+
+# Apply SMOTE
+set.seed(123) # For reproducibility
+smote_result <- SMOTE(X = predictors, target = target, K = 1, dup_size = 4)
+
+# Combine the SMOTE result into a new data frame
+smote_data <- data.frame(smote_result$data)
+
+# Rename the target variable
+names(smote_data)[ncol(smote_data)] <- "SWL_ord"
+
+# Ensure the target variable in the new data frame is a factor
+smote_data$SWL_ord <- as.factor(smote_data$SWL_ord)
+
+# Verify the distribution of the target variable after SMOTE
+print(table(smote_data$SWL_ord))
+
+class_counts <- table(smote_data$SWL_ord)
+
+
+
+class_percentages <- prop.table(class_counts) * 100
+
+
+# Pie chart of class percentages
+pie(class_counts,
+   main = "Percentage of SWL_ord Classes, 1st pass",
+    col = rainbow(length(class_counts)),
+  labels = paste(names(class_counts), round(class_percentages, 1), "%"))
+
+
+
+```
+
+run smote again for the next minority class (SWL)
+
+```{r, smote_again_SWL}
+
+
+
+# Select the relevant predictors and the target variable
+predictors <- smote_data[, c("cleaned_whyplay_encoded", "Hours", "streams", "game_encoded", "gender_encoded", "Age")]
+target <- smote_data$SWL_ord
+
+# Apply SMOTE
+set.seed(123) # For reproducibility
+smote_result <- SMOTE(X = predictors, target = target, K = 1, dup_size = 4)
+
+# Combine the SMOTE result into a new data frame
+smote_data2 <- data.frame(smote_result$data)
+
+# Rename the target variable
+names(smote_data2)[ncol(smote_data2)] <- "SWL_ord"
+
+# Ensure the target variable in the new data frame is a factor
+smote_data2$SWL_ord <- as.factor(smote_data2$SWL_ord)
+
+# Verify the distribution of the target variable after SMOTE
+print(table(smote_data2$SWL_ord))
+
+class_counts <- table(smote_data2$SWL_ord)
+
+
+
+class_percentages <- prop.table(class_counts) * 100
+
+
+# Pie chart of class percentages
+pie(class_counts,
+   main = "Percentage of SWL_ord Classes, 2nd pass",
+    col = rainbow(length(class_counts)),
+  labels = paste(names(class_counts), round(class_percentages, 1), "%"))
+
+
+
+
+```
+
+run smote for a third time to ge the last minority class
+
+```{r, smotex3_swl}
+
+# Select the relevant predictors and the target variable
+predictors <- smote_data2[, c("cleaned_whyplay_encoded", "Hours", "streams", "game_encoded", "gender_encoded", "Age")]
+target <- smote_data2$SWL_ord
+
+cat("Rows in predictors:", nrow(predictors), "\n")
+cat("Rows in target:", length(target), "\n")
+
+# Apply SMOTE
+set.seed(123) # For reproducibility
+smote_result <- SMOTE(X = predictors, target = target, K = 1, dup_size = 2)
+
+# Combine the SMOTE result into a new data frame
+smote_data3 <- data.frame(smote_result$data)
+
+# Rename the target variable
+names(smote_data3)[ncol(smote_data3)] <- "SWL_ord"
+
+# Ensure the target variable in the new data frame is a factor
+smote_data3$SWL_ord <- as.factor(smote_data3$SWL_ord)
+
+# Verify the distribution of the target variable after SMOTE
+print(table(smote_data3$SWL_ord))
+
+class_counts <- table(smote_data3$SWL_ord)
+
+
+
+class_percentages <- prop.table(class_counts) * 100
+
+
+# Pie chart of class percentages
+pie(class_counts,
+   main = "Percentage of SWL_ord Classes, 3rd pass",
+    col = rainbow(length(class_counts)),
+  labels = paste(names(class_counts), round(class_percentages, 1), "%"))
+
+
+
+
+```
+
+```{r, undersmaple_swl}
+
+
+# Ensure the "GAD_ord" column is a factor or character
+smote_data3$SWL_ord <- as.character(smote_data3$SWL_ord)  # Convert to character if it's a factor
+
+# Now, under-sample the "minimal anxiety" class to 3643
+set.seed(123)  # For reproducibility
+
+# Subset the "minimal anxiety" rows and the other classes
+extremely_satisfied <- smote_data3[smote_data3$SWL_ord == "extremely satisfied", ]
+other_classes <- smote_data3[smote_data3$SWL_ord != "extremely satisfied", ]
+
+
+if (nrow(extremely_satisfied) >= 2851) {
+  extreme_sat_undersampled <- extremely_satisfied[sample(1:nrow(extremely_satisfied), 2851), ]
+} else {
+  stop("Not enough rows in 'minimal anxiety' class to sample 2851.")
+}
+
+# Combine the undersampled "minimal anxiety" class with the other classes
+
+
+df_undersampled_swl <- rbind(extreme_sat_undersampled, other_classes)
+
+# Check the new distribution
+table(df_undersampled_swl$SWL_ord)
+
+
+class_counts <- table(df_undersampled_swl$SWL_ord)
+
+class_percentages <- prop.table(class_counts) * 100
+
+# Pie chart of class percentages
+pie(class_counts,
+    main = "Percentage of SWL_ord, after undersamp",
+    col = rainbow(length(class_counts)),
+    labels = paste(names(class_counts), round(class_percentages, 1), "%"))
+
+
+#df_undersampled_swl$SWL_ord <- as.factor(df_undersampled$SWL_ord)
+```
+
+```{r, more_robust_us}
+balance_classes <- function(df_undersampled_swl, target_column = "SWL_ord", reference_class = "dissatisfied") {
+  # Ensure the target column exists in the dataframe
+  if (!target_column %in% colnames(df_undersampled_swl)) {
+    stop(paste("Column", target_column, "does not exist in the dataframe"))
+  }
+
+  # Identify the size of the reference class (dissatisfied)
+  dissatisfied_size <- sum(df_undersampled_swl[[target_column]] == reference_class)
+  
+  # List to store the undersampled data
+  undersampled_data <- list()
+
+  # Loop over each class and sample from it to match the dissatisfied class size
+  for (class_label in unique(df_undersampled_swl[[target_column]])) {
+    # Subset data for the current class
+    class_data <- df_undersampled_swl[df_undersampled_swl[[target_column]] == class_label, ]
+    
+    # If the class size is greater than the dissatisfied class size, sample to match it
+    if (nrow(class_data) > dissatisfied_size) {
+      class_data <- class_data[sample(1:nrow(class_data), dissatisfied_size), ]
+    }
+    
+    # Append the undersampled data
+    undersampled_data[[class_label]] <- class_data
+  }
+  
+  # Combine all undersampled data into a single dataframe
+  balanced_data <- do.call(rbind, undersampled_data)
+  
+  return(balanced_data)
+}
+
+balanced_data <- balance_classes(df_undersampled_swl, target_column = "SWL_ord", reference_class = "dissatisfied")
+
+# Check the structure and distribution of the resulting dataset
+str(balanced_data)
+table(balanced_data$SWL_ord)
+
+```
+
+```{r, violin_swl}
+
+minimal_mild <- df[df$SWL_ord %in% c("extremely satisfied", "satisfied", "slightly satisfied", "neutral", "slightly dissatisfied", "dissatisfied", "extremely dissatisfied" ), ]
+
+# Summary statistics of GAD_T for each category
+aggregate(SWL_T ~ SWL_ord, data = minimal_mild, summary)
+
+# Violin plot to visualize the distribution with y-axis scaled from 0 to 9
+ggplot(minimal_mild, aes(x = SWL_ord, y = SWL_T, fill = SWL_ord)) +
+  geom_violin(trim = FALSE, alpha = 0.5) +
+  geom_boxplot(width = 0.2, position = position_dodge(0.9)) +
+  labs(title = "Violin Plot of SWL_T for all classes",
+       x = "SWL Category", y = "SWL_T Score", fill = "SWL Category") +
+
+  theme_minimal()
+```
+
+```{r, SWL_consolidate}
+# Consolidate satisfaction and dissatisfaction levels
+df_undersampled_swl$SWL_ord <- factor(
+  ifelse(df_undersampled_swl$SWL_ord %in% c("satisfied", "slightly satisfied"), 
+         "sat-slightly_sat", 
+         ifelse(df_undersampled_swl$SWL_ord %in% c("dissatisfied", "slightly dissatisfied"), 
+                "dis-slightly_dis", 
+                as.character(df_undersampled_swl$SWL_ord))), # Retain other classes
+  levels = c("extremely satisfied", "sat-slightly_sat", "neutral", 
+             "dis-slightly_dis", "extremely dissatisfied") # Define desired order
+)
+
+# Verify structure
+str(df_undersampled_swl)
+
+# Check the levels
+levels(df_undersampled_swl$SWL_ord)
+
+table(df_undersampled_swl$SWL_ord)
+
+
+
+ggplot(df_undersampled_swl, aes(x = Hours, fill = SWL_ord)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Feature Distribution by Class", x = "Hours", y = "Density")
+```
+
+```{r, SWL_model}
+
+
+
+df_undersampled_swl$SWL_ord <- as.factor(df_undersampled_swl$SWL_ord)
+
+model_bal_swl <- randomForest(SWL_ord ~ cleaned_whyplay_encoded + Hours + streams + game_encoded + gender_encoded + Age ,
+                             data = df_undersampled_swl, 
+                            ntree = 3000,
+                           mtry = 4, 
+                        nodesize = 5, 
+                         importance = TRUE)
+
+
+
+cat("Accuracy -- bal: ", mean(predict(model_bal_swl) == df_undersampled_swl$SWL_ord), "\n")
+
+print(model_bal_swl)
+
+#importance(model_bal2)
+varImpPlot(model_bal_swl)
+
+
+
+
+```
+
+****************
+```{r, swl_hyperparams}
+# Assuming `balanced_data` is your dataset
+#set.seed(123)  # For reproducibility
+#trainIndex <- createDataPartition(df_undersampled_swl$SWL_ord, p = 0.8, list = FALSE)
+#train_data <- df_undersampled_swl[trainIndex, ]
+#test_data <- df_undersampled_swl[-trainIndex, ]
+#test_data$SWL_ord <- as.factor(test_data$SWL_ord)
+
+#grid <- expand.grid(
+#  mtry = c(2, 4, 6),             # Number of variables to try at each split
+#  splitrule = "gini",            # Splitting criterion (if using `ranger`)
+#  min.node.size = c(3, 5, 7, 9)     # Minimum node size
+#)
+
+#control <- trainControl(
+#  method = "cv",          # Cross-validation
+#  number = 5,             # Number of folds
+#  verboseIter = TRUE      # Display training progress
+#)
+
+
+# Train the Random Forest model
+#rf_model <- train(
+#  SWL_ord ~ cleaned_whyplay_encoded + Hours + streams + game_encoded + gender_encoded + Age,
+#  data = train_data,
+#  method = "ranger",         # Using ranger implementation for efficiency
+#  trControl = control,
+#  tuneGrid = grid
+#)
+
+# Display the best parameters and results
+#print(rf_model)
+
+
+# Predictions on the test dataset
+#predictions <- predict(rf_model, newdata = test_data)
+
+
+```
+
+*************
+
+
+
+
+
+### SPIN
+
+```{r, violin_spin}
+
+
+minimal_mild <- df[df$SPIN_ord %in% c("none", "mild", "moderate", "severe", "very severe"), ]
+
+# Summary statistics of GAD_T for each category
+aggregate(SPIN_T ~ SPIN_ord, data = minimal_mild, summary)
+
+# Violin plot to visualize the distribution with y-axis scaled from 0 to 9
+ggplot(minimal_mild, aes(x = SPIN_ord, y = SPIN_T, fill = SPIN_ord)) +
+  geom_violin(trim = FALSE, alpha = 0.5) +
+  geom_boxplot(width = 0.2, position = position_dodge(0.9)) +
+  labs(title = "Violin Plot of SPNI_T for all classes",
+              x = "SPIN Category", y = "SPIN_T Score", fill = "SPIN Category") +
+  theme_minimal()
+```
+
+```{r, smote1_spin}
+
+
+df$SPIN_ord <- as.factor(df$SPIN_ord)
+print(table(df$SPIN_ord))
+
+class_counts <- table(df$SPIN_ord)
+
+class_percentages <- prop.table(class_counts) * 100
+
+# Pie chart of class percentages
+pie(class_counts,
+    main = "Percentage of SPIN_ord Classes, Initial",
+    col = rainbow(length(class_counts)),
+    labels = paste(names(class_counts), round(class_percentages, 1), "%"))
+
+
+# Select the relevant predictors and the target variable
+#predictors <- df[, c("cleaned_whyplay_encoded", "Hours", "streams", "game_encoded", "gender_encoded", "Age")]
+#target <- df$SPIN_ord
+
+#cat("Rows in predictors:", nrow(predictors), "\n")
+#cat("Rows in target:", length(target), "\n")
+
+#str(predictors)
+#str(target)
+
+# Check for any NA values or data inconsistencies
+#sum(is.na(predictors))
+#sum(is.na(target))
+
+df <- df[!is.na(df$SPIN_ord), ]
+
+#target <- df$SPIN_ord
+
+sum(is.na(target))
+
+# Apply SMOTE
+#set.seed(123) # For reproducibility
+#smote_result2 <- SMOTE(X = predictors, target = target, K = 2, dup_size = 1)
+
+# Ensure the target variable GAD_ord is a factor
+df$SPIN_ord <- as.factor(df$SPIN_ord)
+
+# Select the relevant predictors and the target variable
+predictors <- df[, c("cleaned_whyplay_encoded", "Hours", "streams", "game_encoded", "gender_encoded", "Age")]
+target <- df$SPIN_ord
+
+# Apply SMOTE
+set.seed(123) # For reproducibility
+smote_result <- SMOTE(X = predictors, target = target, K = 1, dup_size = 4)
+
+
+
+# Combine the SMOTE result into a new data frame
+smote_data_spin1 <- data.frame(smote_result$data)
+
+# Rename the target variable
+names(smote_data_spin1)[ncol(smote_data_spin1)] <- "SPIN_ord"
+
+# Ensure the target variable in the new data frame is a factor
+smote_data_spin1$SWL_ord <- as.factor(smote_data_spin1$SPIN_ord)
+
+# Verify the distribution of the target variable after SMOTE
+print(table(smote_data_spin1$SPIN_ord))
+
+str(smote_data_spin1)
+
+class_counts <- table(smote_data_spin1$SPIN_ord)
+
+print(class_counts)
+
+class_percentages <- prop.table(class_counts) * 100
+
+
+# Pie chart of class percentages
+pie(class_counts,
+   main = "Percentage of SPIN_ord Classes, 1st pass",
+    col = rainbow(length(class_counts)),
+  labels = paste(names(class_counts), round(class_percentages, 1), "%"))
+
+```
+
+```{r, spin_smote2}
+# Ensure the target variable GAD_ord is a factor
+smote_data_spin1$SPIN_ord <- as.factor(smote_data_spin1$SPIN_ord)
+
+# Select the relevant predictors and the target variable
+predictors <- smote_data_spin1[, c("cleaned_whyplay_encoded", "Hours", "streams", "game_encoded", "gender_encoded", "Age")]
+target <- smote_data_spin1$SPIN_ord
+
+# Apply SMOTE
+set.seed(123) # For reproducibility
+smote_result <- SMOTE(X = predictors, target = target, K = 1, dup_size = 2)
+
+
+
+# Combine the SMOTE result into a new data frame
+smote_data_spin2 <- data.frame(smote_result$data)
+
+# Rename the target variable
+names(smote_data_spin2)[ncol(smote_data_spin2)] <- "SPIN_ord"
+
+# Ensure the target variable in the new data frame is a factor
+smote_data_spin2$SWL_ord <- as.factor(smote_data_spin2$SPIN_ord)
+
+# Verify the distribution of the target variable after SMOTE
+print(table(smote_data_spin2$SPIN_ord))
+
+str(smote_data_spin2)
+
+class_counts <- table(smote_data_spin2$SPIN_ord)
+
+print(class_counts)
+
+class_percentages <- prop.table(class_counts) * 100
+
+
+# Pie chart of class percentages
+pie(class_counts,
+   main = "Percentage of SPIN_ord Classes, 2nd pass",
+    col = rainbow(length(class_counts)),
+  labels = paste(names(class_counts), round(class_percentages, 1), "%"))
+
+```
+
+```{r, lastsmote_mod}
+# Ensure the target variable GAD_ord is a factor
+smote_data_spin2$SPIN_ord <- as.factor(smote_data_spin2$SPIN_ord)
+
+# Select the relevant predictors and the target variable
+predictors <- smote_data_spin2[, c("cleaned_whyplay_encoded", "Hours", "streams", "game_encoded", "gender_encoded", "Age")]
+target <- smote_data_spin2$SPIN_ord
+
+# Apply SMOTE
+set.seed(123) # For reproducibility
+smote_result <- SMOTE(X = predictors, target = target, K = 1, dup_size = 1)
+
+
+
+# Combine the SMOTE result into a new data frame
+smote_data_spin3 <- data.frame(smote_result$data)
+
+# Rename the target variable
+names(smote_data_spin3)[ncol(smote_data_spin3)] <- "SPIN_ord"
+
+# Ensure the target variable in the new data frame is a factor
+smote_data_spin3$SWL_ord <- as.factor(smote_data_spin3$SPIN_ord)
+
+# Verify the distribution of the target variable after SMOTE
+print(table(smote_data_spin3$SPIN_ord))
+
+str(smote_data_spin3)
+
+class_counts <- table(smote_data_spin3$SPIN_ord)
+
+print(class_counts)
+
+class_percentages <- prop.table(class_counts) * 100
+
+
+# Pie chart of class percentages
+pie(class_counts,
+   main = "Percentage of SPIN_ord Classes, 3rd pass",
+    col = rainbow(length(class_counts)),
+  labels = paste(names(class_counts), round(class_percentages, 1), "%"))
+```
+
+```{r, spin_under}
+
+# Ensure the "GAD_ord" column is a factor or character
+smote_data_spin3$SPIN_ord <- as.character(smote_data_spin3$SPIN_ord)  # Convert to character if it's a factor
+
+# Now, under-sample the "minimal anxiety" class to 3643
+set.seed(123)  # For reproducibility
+
+# Subset the "minimal anxiety" rows and the other classes
+extremely_satisfied <- smote_data_spin3[smote_data_spin3$SPIN_ord == "none", ]
+other_classes <- smote_data_spin3[smote_data_spin3$SPIN_ord != "none", ]
+
+
+if (nrow(extremely_satisfied) >= 3500) {
+  extreme_sat_undersampled <- extremely_satisfied[sample(1:nrow(extremely_satisfied), 3500), ]
+} else {
+  stop("Not enough rows in 'minimal anxiety' class to sample 2851.")
+}
+
+# Combine the undersampled "minimal anxiety" class with the other classes
+
+
+df_undersampled_spin <- rbind(extreme_sat_undersampled, other_classes)
+
+# Check the new distribution
+table(df_undersampled_spin$SPIN_ord)
+
+
+class_counts <- table(df_undersampled_spin$SPIN_ord)
+
+class_percentages <- prop.table(class_counts) * 100
+
+# Pie chart of class percentages
+pie(class_counts,
+    main = "Percentage of SPIN_ord, after undersamp",
+    col = rainbow(length(class_counts)),
+    labels = paste(names(class_counts), round(class_percentages, 1), "%"))
+
+
+```
+
+
+
+```{r, spin_consolidate}
+# Consolidate 'mild' and 'moderate' into 'mild-moderate'
+df_undersampled_spin$SPIN_ord <- factor(
+  ifelse(df_undersampled_spin$SPIN_ord %in% c("mild", "moderate"), 
+         "mild-moderate", 
+         as.character(df_undersampled_spin$SPIN_ord)),  # Retain other classes
+  levels = c("none", "mild-moderate", "severe", "very severe")  # Define desired order
+)
+
+# Verify structure
+str(df_undersampled_spin)
+
+# Check the levels
+levels(df_undersampled_spin$SPIN_ord)
+
+# Check the distribution of the consolidated class
+table(df_undersampled_spin$SPIN_ord)
+
+# Visualize the feature distribution by the new consolidated class
+ggplot(df_undersampled_spin, aes(x = Hours, fill = SPIN_ord)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Feature Distribution by Class (Consolidated)", x = "Hours", y = "Density")
+
+```
+
+
+```{r, spinmodel}
+df_undersampled_spin$SPIN_ord <- as.factor(df_undersampled_spin$SPIN_ord)
+
+
+#class_weights <- c("none" = 3, "mild" = 3, "moderate" = 2, "severe" = 1, "very severe" = 1)
+model_bal_spin <- randomForest(SPIN_ord ~ cleaned_whyplay_encoded + Hours + streams + game_encoded + gender_encoded + Age ,
+                             data = df_undersampled_spin, 
+                            ntree = 3000,
+                           mtry = 4, 
+                        nodesize = 3, 
+                         importance = TRUE
+                       )
+
+
+
+cat("Accuracy -- bal: ", mean(predict(model_bal_spin) == df_undersampled_spin$SPIN_ord), "\n")
+
+print(model_bal_spin)
+
+#importance(model_bal2)
+varImpPlot(model_bal_spin)
+```
+
+
+
+
+## <u>References</u>
+
+
+
+## <u>References</u>
+
+
+
+
 
 
 
