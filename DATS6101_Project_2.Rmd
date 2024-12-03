@@ -1261,7 +1261,7 @@ Team 5 recommends passing our findings to social scientists to adjust the survey
 Given the non-normality of the inventory scores, we also recommend conducting logistic regression to observe the interaction of multiple predictors against the outcomes (inventory scores). Adding this layer of complexity would allow us to more effectively model how gaming habits affect mental health outcomes in gamers. 
 
 
-## <u>Linear Regression Modeling</u>
+## <u>Linear Regression</u>
 We want to make inferences on how mental health indicator scores and categories affect a person's time spent playing and streaming video games. In order to start this process, we are first going to guess that there is a linear relationship among all the variables.
 
 ### Numeric Scores
