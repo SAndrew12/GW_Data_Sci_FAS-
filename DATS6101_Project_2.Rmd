@@ -1261,7 +1261,145 @@ Team 5 recommends passing our findings to social scientists to adjust the survey
 Given the non-normality of the inventory scores, we also recommend conducting logistic regression to observe the interaction of multiple predictors against the outcomes (inventory scores). Adding this layer of complexity would allow us to more effectively model how gaming habits affect mental health outcomes in gamers. 
 
 
+## <u>Linear Regression Modeling</u>
+We want to make inferences on how mental health indicator scores and categories affect a person's time spent playing and streaming video games. In order to start this process, we are first going to guess that there is a linear relationship among all the variables.
 
+### Numeric Scores
+We will first start with a linear model that has individual or combined mental health scores as the independent variable(s) and hours playing and streaming as the dependent variable.
+
+```{r Numeric_LRM}
+# Fit the linear regression models
+lm_gad <- lm(hrs_stream_combined ~ GAD_T, data = df)
+lm_swl <- lm(hrs_stream_combined ~ SWL_T, data = df)
+lm_spin <- lm(hrs_stream_combined ~ SPIN_T, data = df)
+lm_3_combined <- lm(hrs_stream_combined ~ GAD_T + SWL_T + SPIN_T, data = df)
+
+# Define the summaries of each model
+summary_gad <- summary(lm_gad)
+summary_swl <- summary(lm_swl)
+summary_spin <- summary(lm_spin)
+summary_3_combined <- summary(lm_3_combined)
+
+# Values
+## Intercepts and slopes
+intercept_gad <- coef(summary_gad)["(Intercept)", "Estimate"]
+slope_gad <- coef(summary_gad)["GAD_T", "Estimate"]
+## P-value for the slope
+p_value_gad <- coef(summary_gad)["GAD_T", "Pr(>|t|)"]
+## R-squared and Adjusted R-squared
+r_squared_gad <- summary_gad$r.squared
+adj_r_squared_gad <- summary_gad$adj.r.squared
+
+# Call the summaries
+summary_gad
+summary_swl
+summary_spin
+summary_3_combined
+
+# Visualize the relationship between Hours Playing & Streaming and GAD_T
+ggplot(df, aes(x = GAD_T, y = hrs_stream_combined)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Linear Regression: Hours Playing and Streaming vs GAD_T",
+       x = "Generalized Anxiety Disorder Total Score",
+       y = "Hours Spent Playing and Streaming Video Games") +
+  theme_minimal()
+
+# Visualize the relationship between Hours Playing & Streaming and SWL_T
+ggplot(df, aes(x = SWL_T, y = hrs_stream_combined)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Linear Regression: Hours Playing and Streaming vs SWL_T",
+       x = "Satisfaction with Life Total Score",
+       y = "Hours Spent Playing and Streaming Video Games") +
+  theme_minimal()
+
+# Visualize the relationship between Hours Playing & Streaming and SPIN_T
+ggplot(df, aes(x = SPIN_T, y = hrs_stream_combined)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Linear Regression: Hours Playing and Streaming vs SPIN_T",
+       x = "Social Phobia Inventory Total Score",
+       y = "Hours Spent Playing and Streaming Video Games") +
+  theme_minimal()
+
+# Visualize the relationship among Hours Playing & Streaming and the three, numeric scores
+ggplot(df, aes(x = GAD_T + SWL_T + SPIN_T, y = hrs_stream_combined)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Linear Regression: Hours Playing and Streaming vs GAD_T + SWL_T + SPIN_T",
+       x = "3 Total Scores",
+       y = "Hours Spent Playing and Streaming Video Games") +
+  theme_minimal()
+```
+
+#### Outputs of Numeric Models
+I will only be talking about the GAD_T model, as similar logic can be applied to SWL_T, SPINT_T, and the combination of the three metrics. The intercept is `r intercept_gad`. The GAD model is telling us that people in our data set that have a total score of 0 for the GAD-7 questionnaire spends approximately `r round(intercept_gad, 0)` hours playing and streaming video games. The slope of the line of best fit is `r slope_gad`, which means that as the score from the questionnaire increases by 1, the amount of hours playing and streaming video games increases by approximately `r round(slope_gad, 1)` hours. However, the scatter plot is showing a huge issue. Players can only receive <b>integer value scores</b> when taking the GAD-7 questionnaire. This makes all other values in the models, like Adjusted R Squared and p-values (`r adj_r_squared_gad` and `r p_value_gad` respectively), useless. Before abandoning linear regression models altogether, let's see how using the ordinal categories for each metric plays out.
+
+### Ordinal Scores
+We will see how linear models that have the ordinal categories of each  metric functions as the independent variable(s) and hours playing and streaming as the dependent variable.
+
+```{r Odrinal_LRM}
+# Fit the linear regression models
+lm_gad_ord <- lm(hrs_stream_combined ~ GAD_ord, data = df)
+lm_GADE <- lm(hrs_stream_combined ~ GADE, data = df)
+lm_swl_ord <- lm(hrs_stream_combined ~ SWL_ord, data = df)
+lm_spin_ord <- lm(hrs_stream_combined ~ SPIN_ord, data = df)
+lm_4_ord <- lm(hrs_stream_combined ~ GAD_ord + GADE + SWL_ord + SPIN_ord, data = df)
+
+# Define the summaries of each model
+summary_gad_ord <- summary(lm_gad_ord)
+summary_GADE <- summary(lm_GADE)
+summary_swl_ord <- summary(lm_swl_ord)
+summary_spin_ord <- summary(lm_spin_ord)
+summary_4_ord <- summary(lm_4_ord)
+
+# Values
+## R-squared and Adjusted R-squared
+r_squared_gad_ord <- summary_gad_ord$r.squared
+adj_r_squared_gad_ord <- summary_gad_ord$adj.r.squared
+r_squared_4_ord <- summary_4_ord$r.squared
+adj_r_squared_4_ord <- summary_4_ord$adj.r.squared
+
+# Call the summaries
+summary_gad_ord
+summary_GADE
+summary_swl_ord
+summary_spin_ord
+summary_4_ord
+
+ggplot(df, aes(x = GAD_ord, y = hrs_stream_combined)) +
+    geom_boxplot() +
+    labs(title = "Boxplot of Total Hours by GAD Levels",
+         x = "GAD Ordinal Levels",
+         y = "Combined Hours (Gaming + Streaming)") +
+    theme_minimal()
+
+ggplot(df, aes(x = GADE, y = hrs_stream_combined)) +
+    geom_boxplot() +
+    labs(title = "Boxplot of Total Hours by GADE Levels",
+         x = "GADE Ordinal Levels",
+         y = "Combined Hours (Gaming + Streaming)") +
+    theme_minimal()
+
+ggplot(df, aes(x = SWL_ord, y = hrs_stream_combined)) +
+    geom_boxplot() +
+    labs(title = "Boxplot of Total Hours by SWL Levels",
+         x = "SWL Ordinal Levels",
+         y = "Combined Hours (Gaming + Streaming)") +
+    theme_minimal()
+
+ggplot(df, aes(x = SPIN_ord, y = hrs_stream_combined)) +
+    geom_boxplot() +
+    labs(title = "Boxplot of Total Hours by SPIN Levels",
+         x = "SPIN Ordinal Levels",
+         y = "Combined Hours (Gaming + Streaming)") +
+    theme_minimal()
+```
+
+#### Outputs of Ordinal Models
+
+Similarly with the numeric models, I will mostly only discuss the GAD_T model, as the logic for the other models is similar. Using ordinal categories was much better than raw, numeric scores. We get a clear depiction of median hours spent playing and streaming video games based on the category players align to. However, there is still a significant issue. While everything is set up correctly, we receive an R-squared value of `r r_squared_gad_ord`; the adjusted R-squared value is `r adj_r_squared_gad_ord`. This means that the model only `r round(adj_r_squared_gad_ord, 0)*100`% of the variance in the ordinal GAD categories is accounted for. Even using the model that combines all the ordinal categories, including GADE, yields an adjusted R-squared value of `r adj_r_squared_4_ord`, meaning only `r round(adj_r_squared_4_ord, 0)*100`% of the variance is accounted for. This evidence informs us that there is not a linear relationship among the metrics in the data set and hours spent playing and streaming video games. Linear regression is not the correct type of regression to perform for this analysis, so we will have to use logistic regression.
 
 
 ## <u>Logistic Regression </u>
