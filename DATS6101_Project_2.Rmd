@@ -1260,7 +1260,6 @@ Team 5 recommends passing our findings to social scientists to adjust the survey
 
 Given the non-normality of the inventory scores, we also recommend conducting logistic regression to observe the interaction of multiple predictors against the outcomes (inventory scores). Adding this layer of complexity would allow us to more effectively model how gaming habits affect mental health outcomes in gamers. 
 
-
 ## <u>Linear Regression</u>
 We want to make inferences on how mental health indicator scores and categories affect a person's time spent playing and streaming video games. In order to start this process, we are first going to guess that there is a linear relationship among all the variables.
 
@@ -1401,8 +1400,7 @@ ggplot(df, aes(x = SPIN_ord, y = hrs_stream_combined)) +
 
 Similarly with the numeric models, I will mostly only discuss the GAD_T model, as the logic for the other models is similar. Using ordinal categories was much better than raw, numeric scores. We get a clear depiction of median hours spent playing and streaming video games based on the category players align to. However, there is still a significant issue. While everything is set up correctly, we receive an R-squared value of `r r_squared_gad_ord`; the adjusted R-squared value is `r adj_r_squared_gad_ord`. This means that the model only `r round(adj_r_squared_gad_ord, 0)*100`% of the variance in the ordinal GAD categories is accounted for. Even using the model that combines all the ordinal categories, including GADE, yields an adjusted R-squared value of `r adj_r_squared_4_ord`, meaning only `r round(adj_r_squared_4_ord, 0)*100`% of the variance is accounted for. This evidence informs us that there is not a linear relationship among the metrics in the data set and hours spent playing and streaming video games. Linear regression is not the correct type of regression to perform for this analysis, so we will have to use logistic regression.
 
-
-## <u>Logistic Regression </u>
+## <u>Logistic Regression</u>
 # Create the Binary Variable
 
 According to the American Academy of Pediatrics (AAP), teens and adults should be limited to two hours of daily entertainment [@nih_reduce_2013; @cam_adair_screen_2016]. It has been also found that those with three or more hours of screen time were 34% more likely to have a “suicide-related outcome,” meaning suicidal ideation, suicidal plan and/or suicide attempt. Those with five or more hours of screen time were 48% more likely to have a suicide-related outcome [@mary_fristad_adults_2019]. That means the threshold of 15 hours/ week can be considered as normal limit of online streaming and gaming.
