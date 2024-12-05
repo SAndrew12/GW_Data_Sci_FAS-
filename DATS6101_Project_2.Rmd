@@ -1777,6 +1777,8 @@ At the 0.839 Cut-off, the model has lower accuracy (60.5%), but it performs bett
 We are going to use the 0.839 cut-off, as it improves the model's ability to correctly classify the negative cases.
 
 
+# Report Summation
 
+The goal of this 
 
 ## <u>References</u>
