@@ -1415,6 +1415,326 @@ Team 5 recommends passing our findings to social scientists to adjust the survey
 
 Given the non-normality of the inventory scores, we also recommend conducting logistic regression to observe the interaction of multiple predictors against the outcomes (inventory scores). Adding this layer of complexity would allow us to more effectively model how gaming habits affect mental health outcomes in gamers. 
 
+
+
+## <u>Logistic Regression </u>
+
+According to the American Academy of Pediatrics (AAP), teens and adults should be limited to two hours of daily entertainment [@nih_reduce_2013; @cam_adair_screen_2016]. It has been also found that those with three or more hours of screen time were 34% more likely to have a “suicide-related outcome,” meaning suicidal ideation, suicidal plan and/or suicide attempt. Those with five or more hours of screen time were 48% more likely to have a suicide-related outcome [@mary_fristad_adults_2019]. This means playing in between 14-15 hrs/week is considered to be a healthy amount of time spent on screentime. That means the threshold of 15 hours/ week can be considered as normal limit of online streaming and gaming.
+
+We proceed to develop a logistic regression model. Our goal is to identify key factors that influence whether a person's combined hours spent on gaming and streaming exceed 15 hours a week and to assess the effectiveness of our models in making these predictions.
+
+```{r}
+# Create the binary variable indicating whether the combined hours are greater than 15
+df$hrs_stream_binary <- ifelse(df$hrs_stream_combined > 15, 1, 0)
+table(df$hrs_stream_binary)
+```
+
+# Converting categorical variables as factor variables
+
+The categorical variables that we think could have an influence on hours played/ week have been converted into factors in order to proceed with the next steps.
+
+```{r}
+df$SPIN_ord <- as.factor(df$SPIN_ord)
+df$GAD_ord <- as.factor(df$GAD_ord)
+df$SWL_ord <- as.factor(df$SWL_ord)
+df$cleaned_whyplay <- as.factor(df$cleaned_whyplay)
+df$Gender <- as.factor(df$Gender)
+df$Game <- as.factor(df$Game)
+df$Work <- as.factor(df$Work)
+df$Degree <- as.factor(df$Degree)
+df$Platform <- as.factor(df$Platform)
+df$GADE <- as.factor(df$GADE)
+
+```
+
+
+# T-test and Chi-square tests
+Before building the model, we find out if the predictors we think could have an influence on hours played per week actually have any relationship with the dependent variable.
+ 
+```{r}
+
+# Perform a t-test to compare the mean ages of those who have different HoursBinary values
+t.test(df$Age ~ df$hrs_stream_binary)
+
+# Chi-squared test for SPIN_ord and hrs_stream_binary
+table_SPIN_ord <- table(df$SPIN_ord, df$hrs_stream_binary)
+chisq.test(table_SPIN_ord)
+
+# Chi-squared test for GAD_ord and hrs_stream_binary
+table_GAD_ord <- table(df$GAD_ord, df$hrs_stream_binary)
+chisq.test(table_GAD_ord)
+
+# Chi-squared test for SWL_ord and hrs_stream_binary
+table_SWL_ord <- table(df$SWL_ord, df$hrs_stream_binary)
+chisq.test(table_SWL_ord)
+
+# Chi-squared test for Work and hrs_stream_binary
+table_Work <- table(df$Work, df$hrs_stream_binary)
+chisq.test(table_Work)
+
+# Chi-squared test for Gender and hrs_stream_binary
+table_Gender <- table(df$Gender, df$hrs_stream_binary)
+chisq.test(table_Gender)
+
+# Chi-squared test for Game and hrs_stream_binary
+table_Game <- table(df$Game, df$hrs_stream_binary)
+chisq.test(table_Game)
+
+# Chi-squared test for Platform and hrs_stream_binary
+table_Platform <- table(df$Platform, df$hrs_stream_binary)
+chisq.test(table_Platform)
+
+# Chi-squared test for GADE and hrs_stream_binary
+table_GADE <- table(df$GADE, df$hrs_stream_binary)
+chisq.test(table_GADE)
+
+# Chi-squared test for cleaned_whyplay and hrs_stream_binary
+table_cleaned_whyplay <- table(df$cleaned_whyplay, df$hrs_stream_binary)
+chisq.test(table_cleaned_whyplay)
+
+```
+
+
+The results suggest that the variables Age, SPIN_ord, SWL_ord, Work, Gender, Game, Platform, GADE, and cleaned_whyplay are likely to be good predictors of hrs_stream_binary based on the significance of their associations.
+GAD_ord gives Non-significant chi-squared result (p-value = 0.1), suggesting it is not a good predictor.
+
+Now in order to proceed with the model building, we need to ensure that the assumptions of logistic regression are met. Two of these assumptions like the dependent variable should be binary, the observations should be independent of each other have been already met. We now check the Linearity of Logits, that there is no multicollinearity and strong outliers in the data set.
+
+
+# Test the linearity of continuous predictors
+In order to check this, we need to see if the relationship between continuous independent variable (Age) and the logit (log-odds) of the dependent variable is linear or not. We use the Box-Tidwell test to do this:
+
+```{r}
+# Box-Tidwell test for continuous variables
+df$Age_log <- log(df$Age + 1) * df$Age
+
+# Fit the model including the interaction terms only for continuous variables
+model_interaction_cont <- glm(hrs_stream_binary ~ SPIN_ord + SWL_ord + Age + Work + Gender + Game + Platform + GADE + cleaned_whyplay + Age_log, data = df, family = binomial)
+summary(model_interaction_cont)
+
+```
+
+
+The coefficient suggests that the relationship between Age and the log-odds of the outcome is not strictly linear.
+So we now include a quadratic term for Age to capture non-linearity without creating high multicollinearity.
+
+```{r}
+# Create quadratic term for Age
+df$Age2 <- df$Age^2
+
+# Fit the model with Age and Age^2
+model_poly <- glm(hrs_stream_binary ~ SPIN_ord + SWL_ord + Age + Age2 + Work + Gender + Game + Platform + GADE + cleaned_whyplay, data = df, family = binomial)
+
+# Summarize the model
+summary(model_poly)
+
+```
+
+# Check for multicollinearity
+
+We then check for multicollinearity  using the Variance Inflation Factor (VIF):
+
+```{r}
+# Check VIF
+library(car)
+vif(model_poly)
+
+```
+
+We find that the VIF values of Age and Age^2 are greater than 10. We consider using spline functions to model the non-linear relationship more flexibly and potentially reduce this multicollinearity.
+
+```{r}
+
+library(splines)
+
+# Fit the model using splines for Age
+model_spline <- glm(hrs_stream_binary ~ SPIN_ord + SWL_ord + ns(Age, df=3) + Work + Gender + Game + Platform + GADE + cleaned_whyplay, data = df, family = binomial)
+
+# Summarize the model
+summary(model_spline)
+
+# Check VIF
+vif(model_spline)
+
+```
+
+Now we see that the VIF of all the independent variables are within limits.
+
+# Check influence of Strong Outliers
+## Identify and Remove Rows with Missing Values for Model Variables
+
+We examine standardized residuals and leverage values to identify outliers and influential points. But before that we need to identify and remove the missing values from the dataset.
+
+```{r}
+# Check for missing values
+colSums(is.na(df))
+
+```
+
+We find that there are several missing values in the dataset which are removed in the next step.
+
+```{r}
+
+# Define the variables used in the model
+model_vars <- c("hrs_stream_binary", "SPIN_ord", "GAD_ord", "SWL_ord", "Age", "Work", "Gender", "Game", "Platform", "GADE", "cleaned_whyplay")
+
+# Create a subset of the data frame with only the model variables
+df_model <- df[, model_vars]
+
+# Remove rows with any missing values in the model variables
+df_clean <- na.omit(df_model)
+
+```
+
+
+
+# Calculate Standardized Residuals and Leverage Values and generate Influence Plot
+
+Now, we fit the model using the cleaned data frame, calculate the standardized residuals and leverage values and add them to the cleaned data frame. Next, we use diagnostic plots (e.g., Cook's distance, leverage) to identify and potentially address any influential observations.
+
+```{r}
+
+# Fit the logistic regression model using the cleaned data
+model <- glm(hrs_stream_binary ~ SPIN_ord + SWL_ord + ns(Age, df = 3) + Work + Gender + Game + Platform + GADE + cleaned_whyplay, 
+             family = binomial, data = df_clean)
+
+# Calculate standardized residuals
+df_clean$residuals <- rstandard(model)
+
+# Calculate leverage values
+df_clean$leverage <- hatvalues(model)
+
+# Generate the influence plot
+influencePlot(model)
+
+```
+
+The leverage values are mostly moderate. There are no extremely high leverage values that would be of significant concern. All Cook's distances are well below 1, indicating that no single observation is overly influential on the model's fit.
+
+# Model Assessment
+
+Now, we will proceed to assess the significance of each predictor by examining the p-values of the coefficients, creating a confusion matrix using a chosen cut-off value (e.g., 0.5) and evaluate other metrics.
+
+```{r}
+
+# 1. Coefficients’ p-values
+summary(model)
+
+# 2. Confusion Matrix and Accuracy
+predicted_prob <- predict(model, type = "response")
+predicted_class <- ifelse(predicted_prob > 0.5, 1, 0)
+conf_matrix <- table(Predicted = predicted_class, Actual = df_clean$hrs_stream_binary)
+
+# Accuracy
+accuracy <- sum(diag(conf_matrix)) / sum(conf_matrix)
+print(accuracy)
+
+# 3. Precision, Recall, Specificity, F1-score
+library(caret)
+confusionMatrix(as.factor(predicted_class), as.factor(df_clean$hrs_stream_binary), positive = "1")
+
+# 4. ROC-AUC
+library(pROC)
+roc_obj <- roc(df_clean$hrs_stream_binary, predicted_prob)
+auc(roc_obj)
+plot(roc_obj)
+
+# 5. McFadden's Pseudo-R2
+library(pscl)
+pR2(model)
+
+# 6. Feature Selection / Model Comparison (AIC, BIC)
+# AIC and BIC
+AIC(model)
+BIC(model)
+
+# 7. Deviance
+model$deviance
+
+
+```
+
+We find that while the overall accuracy is high (84%), the model performs poorly in identifying the negative class (specificity is very low). The ROC-AUC value suggests a fair discrimination ability. The McFadden's Pseudo-R2 value is 0.0383 (which is relatively low), suggesting that the model does not explain much of the variability in the response variable. The AIC and BIC values are relatively high, suggesting that the model could be further improved.
+
+
+# Adjusting the Cut-off Threshold
+
+We use the ROC curve to find the optimal cut-off value that balances sensitivity and specificity. 
+
+```{r}
+
+predicted_probabilities <- predict(model, newdata = df_clean, type = "response")
+
+library(pROC)
+roc_obj <- roc(df_clean$hrs_stream_binary, predicted_probabilities)
+
+# Plot the ROC curve
+plot(roc_obj)
+
+# Find the optimal cut-off
+optimal_cutoff <- coords(roc_obj, "best", ret = "threshold", best.method = "closest.topleft")
+optimal_cutoff
+
+optimal_cutoff <- optimal_cutoff[1]  # Extract the cut-off value
+
+
+```
+
+The optimal cut-off threshold identified from the ROC curve is approximately 0.839. This means that using a cut-off value of 0.839 instead of the default 0.5 can potentially provide a better balance between sensitivity (true positive rate) and specificity (true negative rate) for our logistic regression model.
+
+
+# Apply the Optimal Cut-off
+
+```{r}
+# Generate predicted classes using the optimal cut-off
+optimal_cutoff_value <- optimal_cutoff[1, "threshold"] # Ensure we're getting the right threshold value
+predicted_classes_optimal <- ifelse(predicted_probabilities > optimal_cutoff_value, 1, 0)
+
+# Ensure the vectors are of the same length
+cat("Length of predicted probabilities: ", length(predicted_probabilities), "\n")
+cat("Length of predicted classes (optimal): ", length(predicted_classes_optimal), "\n")
+cat("Length of actual binary outcome: ", length(df_clean$hrs_stream_binary), "\n")
+
+# Check for NA values in the actual binary outcome
+cat("Number of NA values in actual binary outcome: ", sum(is.na(df_clean$hrs_stream_binary)), "\n")
+
+# Check for NA values in predicted classes
+cat("Number of NA values in predicted classes (optimal): ", sum(is.na(predicted_classes_optimal)), "\n")
+
+# Ensure all vectors are of the same length
+if (length(predicted_classes_optimal) != length(df_clean$hrs_stream_binary)) {
+  stop("Lengths of predicted_classes_optimal and df_clean$hrs_stream_binary do not match.")
+}
+
+# Confusion Matrix
+conf_matrix_optimal <- table(predicted_classes_optimal, df_clean$hrs_stream_binary)
+print(conf_matrix_optimal)
+
+# Calculate performance metrics
+accuracy_optimal <- sum(diag(conf_matrix_optimal)) / sum(conf_matrix_optimal)
+precision_optimal <- conf_matrix_optimal[2, 2] / (conf_matrix_optimal[2, 2] + conf_matrix_optimal[2, 1])
+recall_optimal <- conf_matrix_optimal[2, 2] / (conf_matrix_optimal[2, 2] + conf_matrix_optimal[1, 2])
+f1_score_optimal <- 2 * (precision_optimal * recall_optimal) / (precision_optimal + recall_optimal)
+
+# Print the results
+cat("Accuracy (optimal cut-off): ", accuracy_optimal, "\n")
+cat("Precision (optimal cut-off): ", precision_optimal, "\n")
+cat("Recall (optimal cut-off): ", recall_optimal, "\n")
+cat("F1 Score (optimal cut-off): ", f1_score_optimal, "\n")
+
+```
+
+The model is correct 60.5% of the time, which is moderate but not particularly high. The F1 score provides a balance between precision and recall, indicating a reasonable balance but still suggesting room for improvement.
+
+
+# Output of the LR model
+At the 0.5 Cut-off, the model has high accuracy (84%), but it is biased towards predicting the positive class. This leads to a very low specificity (0.0066), meaning the model fails to correctly identify negative cases (high false positive rate).
+At the 0.839 Cut-off, the model has lower accuracy (60.5%), but it performs better in identifying true positives and minimizes the number of false positives. The model's precision is high (0.891), and the recall is moderate (0.603), balancing the identification of both positive and negative classes. Therefore, we recommend using the 0.839 cut-off for a more balanced and practical prediction of screen time.
+
+To enhance the analysis, we recommend employing a random forest model as an alternative to logistic regression.
+
+
+
 ### Tree Based -- Classifcication 
 
 Initial Data prep
@@ -2253,11 +2573,30 @@ varImpPlot(model_bal_spin)
 
 
 
+
+## <u>Key Findings (Linear Regression)</u>
+
+
+
+
+
+
+
+## <u>Key Findings (Logistic Regression)</u>
+The analysis aimed to predict whether an individual's weekly screen time exceeds 15 hours using logistic regression. It also aimed to identify factors influencing whether individuals exceed 15 hours of weekly screen time (gaming and streaming). Key predictors include age, work status, gender, gaming platform, and motivations for playing. Initial findings revealed that the model has a high overall accuracy (84%) at the default 0.5 cut-off, but this comes at the cost of extremely low specificity (0.0066), meaning it struggles to correctly identify those below the 15-hour threshold. Adjusting the cut-off to 0.839 improves balance, with precision increasing to 0.891 and recall at 0.603, making the model more practical for predicting both high and low screen-time users. The model’s McFadden's Pseudo-R² (0.0383) and AUC (0.638) suggest it has limited explanatory power and fair discrimination ability. While the optimal cut-off enhances performance, the model could still be improved with additional features or alternative approaches.
+
+Based on the cited research, excessive screen time (beyond 15 hours weekly) correlates with negative mental health outcomes, including a higher likelihood of suicide-related outcomes. This model, while limited in explaining variability, provides a practical tool for identifying individuals at risk of excessive screen time. With further refinement, it could serve as a useful framework for targeting interventions aimed at promoting healthier screen-time habits.
+
+
+
+
+
+
+
 ## <u>References</u>
 
 
 
-## <u>References</u>
 
 
 
