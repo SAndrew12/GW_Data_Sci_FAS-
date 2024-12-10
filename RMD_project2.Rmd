@@ -31,7 +31,6 @@ library(smotefamily)
 library(caret)
 ```
 
-
 ```{r setup, include=FALSE}
 # some of common options (and the defaults) are: 
 # include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
@@ -42,7 +41,6 @@ options(scientific=T, digits = 3)
 ```{r read-in, include=TRUE}
 df <- read.csv("GamingStudy_data.csv")
 ```
-
 
 # <u>Introduction</u>
 
@@ -86,12 +84,11 @@ This is the list of mental health predictors.
 
 6. Game Played: the selected game surveyors play the most
 
-
 # <u>Exploratory Data Analysis (EDA) </u>
 
 Before examaing out models, an abridged reminded of our EDA highlights is needed.
 
-### Assumption of Continuity
+### Assumption of Continuity (Project 1)
 
 In our EDA, we noticed that the data for the psychological inventories was not truly continuous. This was made apparent when attempting logarithmic and scale transformations. However, due to the level of difficulty this course is expecting us to persevere, we are assuming normality for all variables.
 
@@ -192,7 +189,6 @@ Finally, we see that the game most played is League of Legends, a multi-player b
 
 To summarize the demographics of our data, we are mostly looking at 18 year old males that reside in the United States and play League of Legends.
 
-
 ```{r, gad_dist}
 ggplot(data = df, aes(x = GAD_T)) +
   geom_histogram(binwidth = 1,
@@ -203,8 +199,6 @@ ggplot(data = df, aes(x = GAD_T)) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 ```
-
-
 
 ### Ordinal for Psychological Inventories
 
@@ -335,7 +329,6 @@ ggplot(df, aes(x = SWL_ord)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-
 SWL is bimodal, show how the grading scale is different from the other two inventories. The seven classes get more extreme on the ends, with the middle being neutral.
 
 ```{r SPIN_ord_dist}
@@ -447,7 +440,6 @@ print(fig)
 
 Now we can see that most gamers play either for fun or to improve their skills. One quick note: the group 'Escape' does not refer to escaping responsibilities. It is more along the lines of dissociation and depression.
 
-
 ```{r hours_ord_dist}
 ggplot(df, aes(x = hours_ord)) +
   geom_bar(fill = "turquoise") +
@@ -457,8 +449,6 @@ ggplot(df, aes(x = hours_ord)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-
-
 
 ```{r}
 
@@ -472,8 +462,6 @@ hrs_GAD_filtered <- hrs_data_cleaned %>%
   select(Hours, GAD1:GAD7, GAD_T)
 
 ```
-
-
 
 ```{r, echo=TRUE, results='hide'}
 # Define the outlierKD2 function
@@ -569,13 +557,11 @@ df_clean <- outlierKD2(df, streams, rm = TRUE, boxplt = FALSE, qqplt = TRUE)
 
 ```
 
-
 ``` {r}
 df_clean$streams_Stand <- scale(df_clean$streams)
 hrs_GAD_filtered_clean$hours_Stand <- scale(hrs_GAD_filtered_clean$Hours)
 
 ```
-
 
 ### Adding Hours and Streams -> Total Time and generating a histogram
 
@@ -603,14 +589,12 @@ ggplot(data = df, aes(x = hrs_stream_combined)) +
 
 We can clearly see from the generated histogram that the combined data called (now called Total time spent on watching streaming and playing games) looks near to normal. We find the average time spent playing and streaming to be around 24 hours/ week.
 
-
 ```{r hours_streams_ANOVA, include=FALSE}
 # Perform one-way ANOVA
 anova_result_Hours_Streams <- aov(streams ~ hours_ord, data = df)
 p_Hours_Streams <- summary(anova_result_Hours_Streams)[[1]]$`Pr(>F)`[1]
 summary(anova_result_Hours_Streams)
 ```
-
 
 ```{r TukeyHSD_Hours_Streams, include=FALSE}
 # Performing Tukey HSD test
@@ -623,16 +607,12 @@ print(tukey_result_Hours_Streams)
 plot(tukey_result_Hours_Streams)
 ```
 
-
-
 ```{r gad_ANOVA, include=FALSE}
 # Perform one-way ANOVA
 anova_result_GAD_Hours <- aov(GAD_T ~ hours_ord, data = df)
 p_GAD <- summary(anova_result_GAD_Hours)[[1]]$`Pr(>F)`[1]
 summary(anova_result_GAD_Hours)
 ```
-
-
 
 ```{r TukeyHSD_GAD_Hours, include=FALSE}
 # Performing Tukey HSD test
@@ -645,14 +625,12 @@ print(tukey_result_GAD_Hours)
 plot(tukey_result_GAD_Hours)
 ```
 
-
 ```{r, swl_ANOVA, include=FALSE}
 # Perform one-way ANOVA
 anova_result_SWL_Hours <- aov(SWL_T ~ hours_ord, data = df)
 p_SWL <- summary(anova_result_SWL_Hours)[[1]]$`Pr(>F)`[1]
 summary(anova_result_SWL_Hours)
 ```
-
 
 ```{r TukeyHSD_SWL_Hours, include=FALSE}
 # Performing Tukey HSD test
@@ -665,15 +643,12 @@ print(tukey_result_SWL_Hours)
 plot(tukey_result_SWL_Hours)
 ```
 
-
-
 ```{r spin_ANOVA, include=FALSE}
 # Perform one-way ANOVA
 anova_result_SPIN_Hours <- aov(SPIN_T ~ hours_ord, data = df)
 p_SPIN <- summary(anova_result_SPIN_Hours)[[1]]$`Pr(>F)`[1]
 summary(anova_result_SPIN_Hours)
 ```
-
 
 ```{r TukeyHSD_SPIN_Hours, include=FALSE}
 # Performing Tukey HSD test
@@ -685,8 +660,6 @@ print(tukey_result_SPIN_Hours)
 # Plot the Tukey HSD results
 plot(tukey_result_SPIN_Hours)
 ```
-
-
 
 ```{r contingency_GAD, include=TRUE, include=FALSE}
 contingency_table_gad <- table(df$GAD_ord, df$cleaned_whyplay)
@@ -731,7 +704,6 @@ chi_squared_test_spin <- chisq.test(contingency_table_spin)
 chi_squared_test_spin
 ```
 
-
 ``` {r, posthoc_GAD, include=FALSE}
 expected_counts <- chisq.test(contingency_table_gad)$expected
 
@@ -756,8 +728,6 @@ ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-
-
 ```{r GAD_ord vs why_play2, include=FALSE}
 
 
@@ -779,8 +749,6 @@ ggplot(df, aes(x = GAD_ord, fill = cleaned_whyplay)) +
   )
 ```
 
-
- 
 ``` {r, posthoc_GADE, include=FALSE}
 expected_counts <- chisq.test(contingency_table_GADE)$expected
 
@@ -826,7 +794,6 @@ ggplot(df, aes(x = GADE, fill = cleaned_whyplay)) +
 
 ```
 
-
 ``` {r, posthoc_SWL, include=FALSE}
 expected_counts <- chisq.test(contingency_table_swl)$expected
 
@@ -855,7 +822,6 @@ ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
   )
 ```
 
-
 ``` {r, posthoc_SPIN, include=FALSE}
 expected_counts <- chisq.test(contingency_table_spin)$expected
 
@@ -880,8 +846,6 @@ ggplot(residuals_df, aes(Var1, Var2, fill = value)) +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-
-
 ```{r SPIN_ord vs why_play, include=FALSE}
 
 ggplot(df, aes(x = SPIN_ord, fill = cleaned_whyplay)) +
@@ -904,20 +868,12 @@ ggplot(df, aes(x = SPIN_ord, fill = cleaned_whyplay)) +
 
 ```
 
-
-
-
 ```{r, include=FALSE}
 
 # Combine the hours played and streams into a new variable
 df$hrs_stream_combined <- df_clean$streams + hrs_GAD_filtered_clean$Hours
 
 ```
-
-
-
-
-
 
 # <u>Linear Regression Modeling</u>
 We want to make inferences on how mental health indicator scores and categories affect a person's time spent playing and streaming video games. In order to start this process, we are first going to guess that there is a linear relationship among all the variables.
@@ -991,7 +947,7 @@ ggplot(df, aes(x = GAD_T + SWL_T + SPIN_T, y = hrs_stream_combined)) +
   theme_minimal()
 ```
 
-#### Outputs of Numeric Models
+### Outputs of Numeric Models
 I will only be talking about the GAD_T model, as similar logic can be applied to SWL_T, SPINT_T, and the combination of the three metrics. The intercept is `r intercept_gad`. The GAD model is telling us that people in our data set that have a total score of 0 for the GAD-7 questionnaire spends approximately `r round(intercept_gad, 0)` hours playing and streaming video games. The slope of the line of best fit is `r slope_gad`, which means that as the score from the questionnaire increases by 1, the amount of hours playing and streaming video games increases by approximately `r round(slope_gad, 1)` hours. However, the scatter plot is showing a huge issue. Players can only receive <b>integer value scores</b> when taking the GAD-7 questionnaire. This makes all other values in the models, like Adjusted R Squared and p-values (`r adj_r_squared_gad` and `r p_value_gad` respectively), useless. Before abandoning linear regression models altogether, let's see how using the ordinal categories for each metric plays out.
 
 ### Ordinal Scores
@@ -1055,13 +1011,9 @@ ggplot(df, aes(x = SPIN_ord, y = hrs_stream_combined)) +
     theme_minimal()
 ```
 
-#### Outputs of Ordinal Models
+### Outputs of Ordinal Models
 
-Similarly with the numeric models, I will mostly only discuss the GAD_T model, as the logic for the other models is similar. Using ordinal categories was much better than raw, numeric scores. We get a clear depiction of median hours spent playing and streaming video games based on the category players align to. However, there is still a significant issue. While everything is set up correctly, we receive an R-squared value of `r r_squared_gad_ord`; the adjusted R-squared value is `r adj_r_squared_gad_ord`. This means that the model only `r round(adj_r_squared_gad_ord, 0)*100`% of the variance in the ordinal GAD categories is accounted for. Even using the model that combines all the ordinal categories, including GADE, yields an adjusted R-squared value of `r adj_r_squared_4_ord`, meaning only `r round(adj_r_squared_4_ord, 0)*100`% of the variance is accounted for. This evidence informs us that there is not a linear relationship among the metrics in the data set and hours spent playing and streaming video games. Linear regression is not the correct type of regression to perform for this analysis, so we will have to use logistic regression.
-
-
-
-
+Similarly with the numeric models, I will mostly only discuss the GAD_ord model, as the logic for the other models is similar. Using ordinal categories was much better than raw, numeric scores. We get a clear depiction of median hours spent playing and streaming video games based on the category players align to. However, there is still a significant issue. While everything is set up correctly, we receive an R-squared value of `r r_squared_gad_ord`; the adjusted R-squared value is `r adj_r_squared_gad_ord`. This means that the model only `r round(adj_r_squared_gad_ord, 0)*100`% of the variance in the ordinal GAD categories is accounted for. Even using the model that combines all the ordinal categories, including GADE, yields an adjusted R-squared value of `r adj_r_squared_4_ord`, meaning only `r round(adj_r_squared_4_ord, 0)*100`% of the variance is accounted for. This evidence informs us that there is not a linear relationship among the metrics in the data set and hours spent playing and streaming video games. Linear regression is not the correct type of regression to perform for this analysis, so we will have to use logistic regression.
 
 # <u>Logistic Regression </u>
 
@@ -1092,7 +1044,6 @@ df$Platform <- as.factor(df$Platform)
 df$GADE <- as.factor(df$GADE)
 
 ```
-
 
 ### T-test and Chi-square tests
 Before building the model, we find out if the predictors we think could have an influence on hours played per week actually have any relationship with the dependent variable.
@@ -1140,12 +1091,10 @@ chisq.test(table_cleaned_whyplay)
 
 ```
 
-
 The results suggest that the variables Age, SPIN_ord, SWL_ord, Work, Gender, Game, Platform, GADE, and cleaned_whyplay are likely to be good predictors of hrs_stream_binary based on the significance of their associations.
 GAD_ord gives Non-significant chi-squared result (p-value = 0.1), suggesting it is not a good predictor.
 
 Now in order to proceed with the model building, we need to ensure that the assumptions of logistic regression are met. Two of these assumptions like the dependent variable should be binary, the observations should be independent of each other have been already met. We now check the Linearity of Logits, that there is no multicollinearity and strong outliers in the data set.
-
 
 ### Test the linearity of continuous predictors
 In order to check this, we need to see if the relationship between continuous independent variable (Age) and the logit (log-odds) of the dependent variable is linear or not. We use the Box-Tidwell test to do this:
@@ -1159,7 +1108,6 @@ model_interaction_cont <- glm(hrs_stream_binary ~ SPIN_ord + SWL_ord + Age + Wor
 summary(model_interaction_cont)
 
 ```
-
 
 The coefficient suggests that the relationship between Age and the log-odds of the outcome is not strictly linear.
 So we now include a quadratic term for Age to capture non-linearity without creating high multicollinearity.
@@ -1232,8 +1180,6 @@ df_clean <- na.omit(df_model)
 
 ```
 
-
-
 ### Calculate Standardized Residuals and Leverage Values and generate Influence Plot
 
 Now, we fit the model using the cleaned data frame, calculate the standardized residuals and leverage values and add them to the cleaned data frame. Next, we use diagnostic plots (e.g., Cook's distance, leverage) to identify and potentially address any influential observations.
@@ -1302,7 +1248,6 @@ model$deviance
 
 We find that while the overall accuracy is high (84%), the model performs poorly in identifying the negative class (specificity is very low). The ROC-AUC value suggests a fair discrimination ability. The McFadden's Pseudo-R2 value is 0.0383 (which is relatively low), suggesting that the model does not explain much of the variability in the response variable. The AIC and BIC values are relatively high, suggesting that the model could be further improved.
 
-
 ### Adjusting the Cut-off Threshold
 
 We use the ROC curve to find the optimal cut-off value that balances sensitivity and specificity. 
@@ -1327,7 +1272,6 @@ optimal_cutoff <- optimal_cutoff[1]  # Extract the cut-off value
 ```
 
 The optimal cut-off threshold identified from the ROC curve is approximately 0.839. This means that using a cut-off value of 0.839 instead of the default 0.5 can potentially provide a better balance between sensitivity (true positive rate) and specificity (true negative rate) for our logistic regression model.
-
 
 ### Apply the Optimal Cut-off
 
@@ -1372,14 +1316,11 @@ cat("F1 Score (optimal cut-off): ", f1_score_optimal, "\n")
 
 The model is correct 60.5% of the time, which is moderate but not particularly high. The F1 score provides a balance between precision and recall, indicating a reasonable balance but still suggesting room for improvement.
 
-
 ### Output of the LR model
 At the 0.5 Cut-off, the model has high accuracy (84%), but it is biased towards predicting the positive class. This leads to a very low specificity (0.0066), meaning the model fails to correctly identify negative cases (high false positive rate).
 At the 0.839 Cut-off, the model has lower accuracy (60.5%), but it performs better in identifying true positives and minimizes the number of false positives. The model's precision is high (0.891), and the recall is moderate (0.603), balancing the identification of both positive and negative classes. Therefore, we recommend using the 0.839 cut-off for a more balanced and practical prediction of screen time.
 
 To enhance the analysis, we recommend employing a random forest model as an alternative to logistic regression.
-
-
 
 # <u>Random Forest Classifcication</u> 
 
@@ -1405,7 +1346,6 @@ df$gender_encoded <- gender_encoded
 df$game_encoded <- game_encoded
 #str(df)
 ```
-
 
 ### GAD
 
@@ -1449,8 +1389,6 @@ smote_data$GAD_ord <- as.factor(smote_data$GAD_ord)
 
 ```
 
-
-
 ```{r, smote_again_gad}
 # Ensure the target variable GAD_ord is a factor
 df$GAD_ord <- as.factor(df$GAD_ord)
@@ -1488,7 +1426,6 @@ class_percentages <- prop.table(class_counts) * 100
 
 #str(smote_data2)
 ```
-
 
 ```{r, model_gad}
 #model_bal <- randomForest(GAD_ord ~ cleaned_whyplay_encoded + Hours * streams #,
@@ -1651,7 +1588,6 @@ metrics_table
 
 ```
 
-
 The random forest model exhibits robust classification performance for anxiety levels, with high recall (0.952–0.955) and F1 scores (0.840–0.902) across moderate and severe anxiety classes, while slightly lower precision for moderate anxiety (0.751) highlights room for improvement. Although the overall accuracy of 79% reflects good predictive capability, the relatively lower recall and F1 score for minimal-mild anxiety (0.824 and 0.891, respectively) suggest the model may struggle with distinguishing this class accurately. 
 
 ### SWL
@@ -1710,8 +1646,6 @@ class_percentages <- prop.table(class_counts) * 100
 
 ```
 
-
-
 ```{r, smote_again_SWL}
 
 
@@ -1753,7 +1687,6 @@ class_percentages <- prop.table(class_counts) * 100
 
 
 ```
-
 
 ```{r, smotex3_swl}
 
@@ -1881,8 +1814,8 @@ balanced_data <- balance_classes(df_undersampled_swl, target_column = "SWL_ord",
 #table(balanced_data$SWL_ord)
 
 ```
-Once again, lack of uniform distribution of the scores leads to the model misclassifying classes when there is skewness towards one of the upper or lower bounds of the next class. 
 
+Once again, lack of uniform distribution of the scores leads to the model misclassifying classes when there is skewness towards one of the upper or lower bounds of the next class. 
 ```{r, include=FALSE}
 minimal_mild <- df[df$SWL_ord %in% c("extremely satisfied", "satisfied", "slightly satisfied", "neutral", "slightly dissatisfied", "dissatisfied", "extremely dissatisfied" ), ]
 
@@ -2022,10 +1955,10 @@ metrics_table
 
 
 ```
+
 Streams and hours played have the greatest effect on modeling SWL, with age close behind.
 
 The model demonstrates solid performance for "Extremely Satisfied" and "Neutral" with high accuracy, precision, and recall, while struggling with "Dis-Slightly Dis" and "Sat-Slightly Satisfied," where precision and recall are low. Overall accuracy is 0.581, suggesting misclassification issues, though the model works reasonably well on more distinct classes like "Extremely Satisfied," with pros in clarity for certain groups but cons in handling less distinct ones.
-
 
 ```{r, swl_hyperparams}
 # Assuming `balanced_data` is your dataset
@@ -2066,12 +1999,6 @@ grid <- expand.grid(
 
 
 ```
-
-
-
-
-
-
 
 ### SPIN
 
@@ -2330,7 +2257,6 @@ df_undersampled_spin$SPIN_ord <- factor(
 
 ```
 
-
 ```{r, spinmodel}
 df_undersampled_spin$SPIN_ord <- as.factor(df_undersampled_spin$SPIN_ord)
 
@@ -2422,22 +2348,13 @@ metrics_table
 
 Age being the most important variable for SPIN suggests that the effects of video games might depend of demographic facts such as the age of the player.
 
-
 The model performs well for the "Very Severe" class with high accuracy, precision, recall, and F1 score, while the "Mild-Moderate" and "Severe" classes show moderate performance with room for improvement, especially in precision. Overall accuracy is 0.59, indicating the model is relatively balanced across all classes, but it struggles with the "None" class, where all metrics are lower.
-
-
-
-
-
-
-
 
 
 # <u>Key Findings </u>
 Linear:
 
-
-
+The relationship among hours playing and streaming video games to three, psychological, diagnostic, assessment scores is extremely non-linear. In project 1, we operated under the assumption that the data was continuous. However, the discrete nature of the assessment scores ensured that assumption was no longer viable. This characteristic prevents further analysis with this method, so other techniques were implemented. 
 
 Logistic:
 
@@ -2451,16 +2368,7 @@ GAD is predictable using the available features. The power of the "whyplay" vari
 
 SWL and SPIN require more gaming habit/demographic features and greater engineering  investment.It is possible that evaluation metrics can improve given more sensitive models. For now, it seems apparent that stream/hours effect satisfaction with life and that a respondents age greatly impacts their level of social phobia.  
 
-
-
-
-
-
-
-
-
 # <u>References</u>
-
 
 
 
